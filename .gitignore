@@ -1,0 +1,75 @@
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.github/
+
+# Dependencies
+node_modules/
+/packages/*/node_modules/
+
+# Build output
+dist/
+build/
+bin/
+obj/
+*.dll
+*.exe
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+.cache/
+.coverage
+coverage/
+
+# IDE files
+*.sublime-project
+*.sublime-workspace
+.vscode/settings.json
+.vscode/launch.json
+
+# C# specific
+*.csproj.user
+*.sln.docstates
+*.suo
+*.user
+*.userosscache
+
+# Rider IDE
+.idea/
+*.sln.iml
+
+# NuGet
+.nuget/
+packages/
+
+*.sqlite3
+
+# Testing
+.pytest_cache/
+.nyc_output/

@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "standart-desk-backend", "standart-desk-backend", "{A7221CAF-4043-2B3C-4D86-0BED73FC109B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandartDesk", "standart-desk-backend\StandartDesk.csproj", "{080CB996-072E-4EE8-87A7-4FD088C5954C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{080CB996-072E-4EE8-87A7-4FD088C5954C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{080CB996-072E-4EE8-87A7-4FD088C5954C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{080CB996-072E-4EE8-87A7-4FD088C5954C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{080CB996-072E-4EE8-87A7-4FD088C5954C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{080CB996-072E-4EE8-87A7-4FD088C5954C} = {A7221CAF-4043-2B3C-4D86-0BED73FC109B}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7E6D4742-5CED-4B74-A9C9-68729AD1C78F}
+	EndGlobalSection
+EndGlobal
