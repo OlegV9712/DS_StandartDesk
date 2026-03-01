@@ -100,8 +100,8 @@ class ApiService {
     return this.client.get<Project>(`/projects/${projectId}`);
   }
 
-  createProject(name: string, description?: string, userId: number = 1) {
-    return this.client.post<Project>('/projects', { name, description }, { params: { userId } });
+  createProject(name: string, description?: string, type: number = 0, folderId?: number, userId: number = 1) {
+    return this.client.post<Project>('/projects', { name, description, type, folderId }, { params: { userId } });
   }
 
   updateProject(projectId: number, name: string, description?: string, userId: number = 1) {
@@ -313,6 +313,39 @@ class ApiService {
 
   deleteNotification(notificationId: number) {
     return this.client.delete(`/notifications/${notificationId}`);
+  }
+
+  // Folders
+  getFolders(userId: number = 1) {
+    return this.client.get('/folders', { params: { userId } });
+  }
+
+  getFolder(folderId: number) {
+    return this.client.get(`/folders/${folderId}`);
+  }
+
+  createFolder(name: string, parentFolderId?: number, userId: number = 1) {
+    return this.client.post(
+      '/folders',
+      { name, parentFolderId },
+      { params: { userId } }
+    );
+  }
+
+  updateFolder(folderId: number, name: string) {
+    return this.client.put(`/folders/${folderId}`, { name });
+  }
+
+  deleteFolder(folderId: number, userId: number = 1) {
+    return this.client.delete(`/folders/${folderId}`, { params: { userId } });
+  }
+
+  moveProjectToFolder(projectId: number, targetFolderId?: number, userId: number = 1) {
+    return this.client.post(
+      '/folders/move',
+      { projectId, targetFolderId },
+      { params: { userId } }
+    );
   }
 
   // Export

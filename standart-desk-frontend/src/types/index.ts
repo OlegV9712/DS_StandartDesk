@@ -9,11 +9,24 @@ export interface User {
   updatedAt?: string;
 }
 
+export interface Folder {
+  id: number;
+  name: string;
+  ownerId: number;
+  parentFolderId?: number | null;
+  createdAt: string;
+  updatedAt?: string;
+  subFolders: Folder[];
+  projects: Project[];
+}
+
 export interface Project {
   id: number;
   name: string;
   description?: string;
   ownerName: string;
+  type: number; // 0 = Algorithm, 1 = AssistantBot
+  folderId?: number | null;
   createdAt: string;
   updatedAt?: string;
   isArchived: boolean;
@@ -62,12 +75,35 @@ export interface AuditLog {
 
 export interface Block {
   id: string;
-  type: 'process' | 'decision' | 'data' | 'terminator';
+  // Algorithm blocks
+  type: 'process' | 'decision' | 'data' | 'terminator' | 
+    // Bot assistant blocks
+    'start' | 'message' | 'button_container' | 'integration';
   label: string;
   x: number;
   y: number;
   width: number;
   height: number;
+  color?: string;
+  
+  // For message blocks (bot responses)
+  text?: string;
+  
+  // For button_container blocks
+  buttons?: BlockButton[];
+  
+  // For integration blocks
+  integrationConfig?: {
+    method: string;
+    parameters: Record<string, any>;
+    description?: string;
+  };
+}
+
+export interface BlockButton {
+  id: string;
+  label: string;
+  nextBlockId?: string;
 }
 
 export interface Connection {

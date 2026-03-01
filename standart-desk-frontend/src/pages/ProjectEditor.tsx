@@ -27,6 +27,7 @@ export const ProjectEditor: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [projectType, setProjectType] = useState<number>(0);
 
   useEffect(() => {
     if (id && user?.id) {
@@ -38,6 +39,17 @@ export const ProjectEditor: React.FC = () => {
     try {
       setLoading(true);
       console.log(`[EDITOR] Loading project ${id} for user ${user?.id}`);
+
+      // Fetch project info to get projectType
+      try {
+        const projectResponse = await apiService.getProject(parseInt(id!));
+        const projectData = projectResponse.data;
+        console.log('[EDITOR] Loaded project:', projectData);
+        setProjectType(projectData.type || 0);
+      } catch (projectErr: any) {
+        console.warn('[EDITOR] Failed to fetch project info:', projectErr);
+        setProjectType(0); // Default to Algorithm type
+      }
 
       // Fetch pages for this project
       try {
@@ -205,6 +217,7 @@ export const ProjectEditor: React.FC = () => {
           <div className="editor-section">
             <CanvasEditor
               projectId={parseInt(id)}
+              projectType={projectType}
               blockSchema={blockSchema}
               onSave={handleSaveBlockSchema}
             />

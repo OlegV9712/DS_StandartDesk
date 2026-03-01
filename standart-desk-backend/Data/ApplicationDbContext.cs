@@ -11,6 +11,7 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Folder> Folders { get; set; } = null!;
     public DbSet<Project> Projects { get; set; } = null!;
     public DbSet<Page> Pages { get; set; } = null!;
     public DbSet<BlockSchema> BlockSchemas { get; set; } = null!;
@@ -34,6 +35,25 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
             .IsUnique();
+
+        // Folder Configuration
+        modelBuilder.Entity<Folder>()
+            .HasKey(f => f.Id);
+        modelBuilder.Entity<Folder>()
+            .HasOne(f => f.Owner)
+            .WithMany()
+            .HasForeignKey(f => f.OwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Folder>()
+            .HasOne(f => f.ParentFolder)
+            .WithMany(f => f.SubFolders)
+            .HasForeignKey(f => f.ParentFolderId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Folder>()
+            .HasMany(f => f.Projects)
+            .WithOne(p => p.Folder)
+            .HasForeignKey(p => p.FolderId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // Project Configuration
         modelBuilder.Entity<Project>()

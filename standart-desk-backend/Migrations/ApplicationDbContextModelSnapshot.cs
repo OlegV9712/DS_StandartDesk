@@ -178,6 +178,37 @@ namespace StandartDesk.Migrations
                     b.ToTable("Comments");
                 });
 
+            modelBuilder.Entity("StandartDesk.Models.Folder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ParentFolderId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.HasIndex("ParentFolderId");
+
+                    b.ToTable("Folders");
+                });
+
             modelBuilder.Entity("StandartDesk.Models.Notification", b =>
                 {
                     b.Property<int>("Id")
@@ -279,6 +310,9 @@ namespace StandartDesk.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("FolderId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsArchived")
                         .HasColumnType("INTEGER");
 
@@ -289,10 +323,15 @@ namespace StandartDesk.Migrations
                     b.Property<int>("OwnerId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FolderId");
 
                     b.HasIndex("OwnerId");
 
@@ -520,6 +559,24 @@ namespace StandartDesk.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("StandartDesk.Models.Folder", b =>
+                {
+                    b.HasOne("StandartDesk.Models.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("StandartDesk.Models.Folder", "ParentFolder")
+                        .WithMany("SubFolders")
+                        .HasForeignKey("ParentFolderId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Owner");
+
+                    b.Navigation("ParentFolder");
+                });
+
             modelBuilder.Entity("StandartDesk.Models.Notification", b =>
                 {
                     b.HasOne("StandartDesk.Models.User", "FromUser")
@@ -563,11 +620,18 @@ namespace StandartDesk.Migrations
 
             modelBuilder.Entity("StandartDesk.Models.Project", b =>
                 {
+                    b.HasOne("StandartDesk.Models.Folder", "Folder")
+                        .WithMany("Projects")
+                        .HasForeignKey("FolderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("StandartDesk.Models.User", "Owner")
                         .WithMany("Projects")
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Folder");
 
                     b.Navigation("Owner");
                 });
@@ -621,6 +685,13 @@ namespace StandartDesk.Migrations
                     b.Navigation("AuditLogs");
 
                     b.Navigation("Versions");
+                });
+
+            modelBuilder.Entity("StandartDesk.Models.Folder", b =>
+                {
+                    b.Navigation("Projects");
+
+                    b.Navigation("SubFolders");
                 });
 
             modelBuilder.Entity("StandartDesk.Models.Page", b =>

@@ -9,7 +9,6 @@ interface TaskBoardProps {
   onReassign: (taskId: number) => void;
   onViewDetails: (taskId: number) => void;
   onStatusChange: (taskId: number, newStatus: number) => void;
-  onDelete: (taskId: number) => void;
 }
 
 const STATUS_LABELS: Record<number, string> = {
@@ -32,7 +31,6 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
   onReassign,
   onViewDetails,
   onStatusChange,
-  onDelete,
 }) => {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragSource, setDragSource] = useState<number | null>(null);

@@ -1,5 +1,11 @@
 namespace StandartDesk.Models;
 
+public enum ProjectType
+{
+    Algorithm = 0,     // Standard flowchart
+    AssistantBot = 1   // Chatbot
+}
+
 public class Project
 {
     public int Id { get; set; }
@@ -7,6 +13,9 @@ public class Project
     public string? Description { get; set; }
     public int OwnerId { get; set; }
     public User? Owner { get; set; }
+    public ProjectType Type { get; set; } = ProjectType.Algorithm;
+    public int? FolderId { get; set; }
+    public Folder? Folder { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public bool IsArchived { get; set; } = false;

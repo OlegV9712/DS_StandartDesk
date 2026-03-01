@@ -45,6 +45,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
           <button
             className="nav-item"
+            onClick={() => navigate('/bot')}
+          >
+            <span className="nav-icon">🤖</span>
+            <span className="nav-label">Bot Assistant</span>
+          </button>
+
+          <button
+            className="nav-item"
             onClick={() => navigate('/tasks')}
           >
             <span className="nav-icon">📋</span>

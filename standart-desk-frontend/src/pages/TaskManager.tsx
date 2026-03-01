@@ -298,7 +298,6 @@ export const TaskManager: React.FC = () => {
           onReassign={handleReassignClick}
           onViewDetails={handleViewDetails}
           onStatusChange={handleStatusChange}
-          onDelete={handleDeleteTask}
         />
       )}
 

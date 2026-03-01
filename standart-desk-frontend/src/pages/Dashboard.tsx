@@ -2,130 +2,269 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../store/authStore';
+import { apiService } from '../services/api';
+import { ProjectTypeModal } from '../components/ProjectTypeModal';
+import { Folder, Project } from '../types';
 import '../styles/dashboard.css';
-
-interface Project {
-  id: number;
-  name: string;
-  description?: string;
-  ownerName: string;
-  createdAt: string;
-  updatedAt?: string;
-  isArchived: boolean;
-  pages: any[];
-}
 
 export const Dashboard: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newProject, setNewProject] = useState({ name: '', description: '' });
+  const [showTypeModal, setShowTypeModal] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [expandedFolders, setExpandedFolders] = useState<Set<number>>(new Set());
+  const [renamingFolderId, setRenamingFolderId] = useState<number | null>(null);
+  const [renamingName, setRenamingName] = useState('');
+  const [showNewFolderInput, setShowNewFolderInput] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [draggedProjectId, setDraggedProjectId] = useState<number | null>(null);
   const navigate = useNavigate();
   const user = useAuth((state) => state.user);
-  const token = useAuth((state) => state.user?.token);
 
   useEffect(() => {
-    fetchProjects();
+    fetchData();
   }, []);
 
-  const fetchProjects = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/projects?userId=${user?.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setProjects(data);
-      } else {
-        console.error('Failed to fetch projects:', response.statusText);
-      }
+      const [projectsRes, foldersRes] = await Promise.all([
+        apiService.getProjects(user?.id || 1),
+        apiService.getFolders(user?.id || 1)
+      ]);
+      setProjects(projectsRes.data);
+      setFolders(foldersRes.data);
     } catch (err) {
-      console.error('Error fetching projects:', err);
+      console.error('Error fetching data:', err);
       setError('Failed to load projects');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateProject = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!newProject.name.trim()) {
-      setError('Project name is required');
-      return;
-    }
-
+  const handleCreateProject = async (type: 'algorithm' | 'assistant_bot', name: string, description: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/projects?userId=${user?.id}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: newProject.name,
-          description: newProject.description
-        })
-      });
-
-      if (response.ok) {
-        const createdProject = await response.json();
-        setProjects([...projects, createdProject]);
-        setShowCreateModal(false);
-        setNewProject({ name: '', description: '' });
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Failed to create project');
-      }
+      const typeValue = type === 'algorithm' ? 0 : 1;
+      await apiService.createProject(name, description, typeValue, selectedFolderId || undefined, user?.id || 1);
+      setShowTypeModal(false);
+      await fetchData();
     } catch (err) {
       console.error('Error creating project:', err);
-      setError('Connection error');
+      setError('Failed to create project');
     }
   };
 
-  const handleOpenProject = (projectId: number) => {
-    navigate(`/project/${projectId}`);
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    try {
+      await apiService.createFolder(newFolderName, undefined, user?.id || 1);
+      setNewFolderName('');
+      setShowNewFolderInput(false);
+      await fetchData();
+    } catch (err) {
+      console.error('Error creating folder:', err);
+      setError('Failed to create folder');
+    }
+  };
+
+  const handleRenameFolder = async (folderId: number) => {
+    if (!renamingName.trim()) {
+      setRenamingFolderId(null);
+      return;
+    }
+    try {
+      await apiService.updateFolder(folderId, renamingName);
+      setRenamingFolderId(null);
+      await fetchData();
+    } catch (err) {
+      console.error('Error renaming folder:', err);
+      setError('Failed to rename folder');
+    }
+  };
+
+  const handleDeleteFolder = async (folderId: number) => {
+    if (!window.confirm('Delete this folder? Projects will be moved to root.')) return;
+    try {
+      await apiService.deleteFolder(folderId);
+      await fetchData();
+    } catch (err) {
+      console.error('Error deleting folder:', err);
+      setError('Failed to delete folder');
+    }
   };
 
   const handleDeleteProject = async (projectId: number) => {
-    if (!confirm('Are you sure you want to delete this project?')) {
-      return;
-    }
-
+    if (!window.confirm('Delete this project?')) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/projects/${projectId}?userId=${user?.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        setProjects(projects.filter(p => p.id !== projectId));
-      }
+      await apiService.deleteProject(projectId, user?.id || 1);
+      setProjects(projects.filter(p => p.id !== projectId));
     } catch (err) {
       console.error('Error deleting project:', err);
+      setError('Failed to delete project');
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, projectId: number) => {
+    setDraggedProjectId(projectId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDropOnFolder = async (e: React.DragEvent, folderId: number) => {
+    e.preventDefault();
+    if (draggedProjectId) {
+      try {
+        // Update locally first for UI feedback
+        const updatedProjects = projects.map(p =>
+          p.id === draggedProjectId ? { ...p, folderId } : p
+        );
+        setProjects(updatedProjects);
+        // TODO: Call API to persist the change if you have an endpoint for it
+      } catch (err) {
+        console.error('Error moving project:', err);
+        setError('Failed to move project');
+      }
+      setDraggedProjectId(null);
+    }
+  };
+
+  const handleDropOnRoot = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (draggedProjectId) {
+      try {
+        const updatedProjects = projects.map(p =>
+          p.id === draggedProjectId ? { ...p, folderId: null } : p
+        );
+        setProjects(updatedProjects);
+      } catch (err) {
+        console.error('Error moving project:', err);
+        setError('Failed to move project');
+      }
+      setDraggedProjectId(null);
+    }
+  };
+
+  const toggleFolder = (folderId: number) => {
+    const newExpanded = new Set(expandedFolders);
+    if (newExpanded.has(folderId)) {
+      newExpanded.delete(folderId);
+    } else {
+      newExpanded.add(folderId);
+    }
+    setExpandedFolders(newExpanded);
+  };
+
+  const rootProjects = projects.filter(p => !p.folderId);
+
+  const getFolderProjects = (folderId: number) => {
+    return projects.filter(p => p.folderId === folderId);
+  };
+
+  const renderFolderContent = (folder: Folder, level: number = 0) => {
+    const isExpanded = expandedFolders.has(folder.id);
+    const folderProjects = getFolderProjects(folder.id);
+
+    return (
+      <div key={folder.id} style={{ marginLeft: `${level * 20}px` }}>
+        <div className="folder-item">
+          <span
+            className="folder-toggle"
+            onClick={() => toggleFolder(folder.id)}
+          >
+            {isExpanded ? '▼' : '▶'}
+          </span>
+          
+          {renamingFolderId === folder.id ? (
+            <input
+              type="text"
+              className="folder-rename-input"
+              value={renamingName}
+              autoFocus
+              onChange={(e) => setRenamingName(e.target.value)}
+              onBlur={() => handleRenameFolder(folder.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleRenameFolder(folder.id);
+                if (e.key === 'Escape') setRenamingFolderId(null);
+              }}
+            />
+          ) : (
+            <>
+              <span className="folder-icon">📁 {folder.name}</span>
+              <div className="folder-actions">
+                <button
+                  className="action-btn-sm"
+                  onClick={() => {
+                    setRenamingFolderId(folder.id);
+                    setRenamingName(folder.name);
+                  }}
+                >
+                  ✏️
+                </button>
+                <button
+                  className="action-btn-sm"
+                  onClick={() => handleDeleteFolder(folder.id)}
+                >
+                  🗑️
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {isExpanded && (
+          <div className="folder-contents" onDragOver={handleDragOver} onDrop={(e) => handleDropOnFolder(e, folder.id)}>
+            {folder.subFolders.map(subFolder => renderFolderContent(subFolder, level + 1))}
+
+            {folderProjects.map(project => (
+              <div
+                key={project.id}
+                className={`project-item ${draggedProjectId === project.id ? 'dragging' : ''}`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, project.id)}
+                onDragEnd={() => setDraggedProjectId(null)}
+              >
+                <span className="project-type-icon">
+                  {project.type === 1 ? '🤖' : '📊'}
+                </span>
+                <span className="project-title">{project.name}</span>
+                <div className="project-actions-inline">
+                  <button
+                    className="action-btn-sm"
+                    onClick={() => navigate(`/project/${project.id}`)}
+                  >
+                    Open
+                  </button>
+                  <button
+                    className="action-btn-sm danger"
+                    onClick={() => handleDeleteProject(project.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
-    <div className="dashboard">
+    <div className="dashboard-container">
       {/* Header */}
       <div className="dashboard-header">
-        <div className="header-content">
-          <h1 className="dashboard-title">📁 My Projects</h1>
-          <p className="dashboard-subtitle">Welcome back, {user?.fullName || user?.username}!</p>
+        <div>
+          <h1>📁 Projects</h1>
+          <p>Welcome, {user?.fullName || user?.username}!</p>
         </div>
         <button
-          className="btn-create"
-          onClick={() => setShowCreateModal(true)}
+          className="btn-primary"
+          onClick={() => setShowTypeModal(true)}
         >
           ➕ New Project
         </button>
@@ -134,147 +273,134 @@ export const Dashboard: React.FC = () => {
       {/* Error message */}
       {error && (
         <motion.div
-          className="dashboard-error"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
+          className="error-message"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
         >
           ⚠️ {error}
-          <button onClick={() => setError('')} className="error-close">✕</button>
+          <button onClick={() => setError('')}>×</button>
         </motion.div>
       )}
 
-      {/* Projects grid */}
-      <div className="projects-container">
-        {loading ? (
-          <div className="loading-message">
-            <span className="spinner"></span>
-            Loading projects...
-          </div>
-        ) : projects.length === 0 ? (
-          <motion.div
-            className="empty-state"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            <div className="empty-icon">📭</div>
-            <h2>No projects yet</h2>
-            <p>Create your first project to get started</p>
-            <button
-              className="btn-primary"
-              onClick={() => setShowCreateModal(true)}
-            >
-              Create Project
-            </button>
-          </motion.div>
-        ) : (
-          <motion.div
-            className="projects-grid"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            {projects.map((project, index) => (
-              <motion.div
-                key={project.id}
-                className="project-card"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ y: -4 }}
-              >
-                <div className="project-header">
-                  <div className="project-icon">📊</div>
-                  <div className="project-meta">
-                    <span className="project-pages">{project.pages?.length || 0} pages</span>
-                  </div>
-                </div>
-
-                <h3 className="project-name">{project.name}</h3>
-
-                {project.description && (
-                  <p className="project-description">{project.description}</p>
-                )}
-
-                <div className="project-footer">
-                  <div className="project-info">
-                    <span className="info-label">Created:</span>
-                    <span className="info-value">
-                      {new Date(project.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="project-actions">
+      {/* Main content */}
+      {loading ? (
+        <div className="loading">
+          <span className="spinner"></span> Loading...
+        </div>
+      ) : (
+        <div className="projects-view">
+          {/* Folders and Root Projects */}
+          <div className="folders-section">
+            {/* New folder button */}
+            <div className="new-folder-control">
+              {showNewFolderInput ? (
+                <div className="new-folder-input-group">
+                  <input
+                    type="text"
+                    placeholder="Folder name..."
+                    value={newFolderName}
+                    autoFocus
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleCreateFolder();
+                      if (e.key === 'Escape') {
+                        setShowNewFolderInput(false);
+                        setNewFolderName('');
+                      }
+                    }}
+                  />
+                  <button onClick={handleCreateFolder}>Create</button>
                   <button
-                    className="action-btn action-open"
-                    onClick={() => handleOpenProject(project.id)}
+                    onClick={() => {
+                      setShowNewFolderInput(false);
+                      setNewFolderName('');
+                    }}
                   >
-                    🔓 Open
-                  </button>
-                  <button
-                    className="action-btn action-delete"
-                    onClick={() => handleDeleteProject(project.id)}
-                  >
-                    🗑️ Delete
+                    Cancel
                   </button>
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </div>
-
-      {/* Create project modal */}
-      {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <motion.div
-            className="modal"
-            onClick={(e) => e.stopPropagation()}
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-          >
-            <h2 className="modal-title">📁 Create New Project</h2>
-            <form onSubmit={handleCreateProject}>
-              <div className="form-group">
-                <label htmlFor="name">Project Name *</label>
-                <input
-                  id="name"
-                  type="text"
-                  placeholder="Enter project name"
-                  value={newProject.name}
-                  onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                  className="form-input"
-                  autoFocus
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="description">Description</label>
-                <textarea
-                  id="description"
-                  placeholder="Enter project description (optional)"
-                  value={newProject.description}
-                  onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                  className="form-input form-textarea"
-                  rows={4}
-                />
-              </div>
-
-              <div className="modal-actions">
-                <button type="submit" className="btn-primary">
-                  Create Project
-                </button>
+              ) : (
                 <button
-                  type="button"
                   className="btn-secondary"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => setShowNewFolderInput(true)}
                 >
-                  Cancel
+                  ➕ New Folder
                 </button>
+              )}
+            </div>
+
+            {/* Folders tree */}
+            <div className="folders-tree">
+              {folders
+                .filter(f => !f.parentFolderId)
+                .map(folder => renderFolderContent(folder, 0))}
+            </div>
+
+            {/* Root Projects (Not in any folder) */}
+            {rootProjects.length > 0 && (
+              <div
+                className="root-projects-zone"
+                onDragOver={handleDragOver}
+                onDrop={handleDropOnRoot}
+              >
+                <div className="zone-label">📋 Projects (Root)</div>
+                <div className="projects-list">
+                  {rootProjects.map(project => (
+                    <div
+                      key={project.id}
+                      className={`project-item ${draggedProjectId === project.id ? 'dragging' : ''}`}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, project.id)}
+                      onDragEnd={() => setDraggedProjectId(null)}
+                    >
+                      <span className="project-type-icon">
+                        {project.type === 1 ? '🤖' : '📊'}
+                      </span>
+                      <span className="project-title">{project.name}</span>
+                      <div className="project-actions-inline">
+                        <button
+                          className="action-btn-sm"
+                          onClick={() => navigate(`/project/${project.id}`)}
+                        >
+                          Open
+                        </button>
+                        <button
+                          className="action-btn-sm danger"
+                          onClick={() => handleDeleteProject(project.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </form>
-          </motion.div>
+            )}
+
+            {/* Empty state */}
+            {folders.length === 0 && rootProjects.length === 0 && (
+              <div className="empty-state">
+                <div className="empty-icon">📭</div>
+                <h2>No projects yet</h2>
+                <p>Create your first project to get started</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
+
+      {/* Project Type Modal */}
+      <ProjectTypeModal
+        isOpen={showTypeModal}
+        onClose={() => setShowTypeModal(false)}
+        onSelectType={handleCreateProject}
+        projectName=""
+        projectDescription=""
+        onNameChange={() => {}}
+        onDescriptionChange={() => {}}
+      />
     </div>
   );
 };
+
+export default Dashboard;

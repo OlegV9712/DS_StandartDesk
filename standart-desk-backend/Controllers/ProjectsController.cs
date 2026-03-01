@@ -37,6 +37,8 @@ public class ProjectsController : ControllerBase
             Name = p.Name,
             Description = p.Description,
             OwnerName = p.Owner?.FullName ?? p.Owner?.Username ?? "Unknown",
+            Type = (int)p.Type,
+            FolderId = p.FolderId,
             CreatedAt = p.CreatedAt,
             UpdatedAt = p.UpdatedAt,
             IsArchived = p.IsArchived,
@@ -71,6 +73,8 @@ public class ProjectsController : ControllerBase
         {
             Id = project.Id,
             Name = project.Name,
+            Type = (int)project.Type,
+            FolderId = project.FolderId,
             Description = project.Description,
             OwnerName = project.Owner?.FullName ?? project.Owner?.Username ?? "Unknown",
             CreatedAt = project.CreatedAt,
@@ -104,6 +108,8 @@ public class ProjectsController : ControllerBase
             Name = dto.Name,
             Description = dto.Description,
             OwnerId = userId,
+            Type = (ProjectType)dto.Type,
+            FolderId = dto.FolderId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -120,6 +126,8 @@ public class ProjectsController : ControllerBase
             Name = project.Name,
             Description = project.Description,
             OwnerName = user.FullName ?? user.Username,
+            Type = (int)project.Type,
+            FolderId = project.FolderId,
             CreatedAt = project.CreatedAt,
             UpdatedAt = project.UpdatedAt,
             IsArchived = project.IsArchived,

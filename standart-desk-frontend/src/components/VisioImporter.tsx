@@ -33,7 +33,10 @@ export const VisioImporter: React.FC<VisioImporterProps> = ({ project, onImportS
 
   const parseVisioFile = async (file: File): Promise<VisioPage[]> => {
     // Временная реализация - парсинг базовой структуры
-    // Полный Visio import требует jszip и парсинга XML
+    // Полный Visio import требует jszip и парсинга XML 
+    // Дополнительно уточнить у Соломатина по поводу автоматической выгрузки и проливки кодом из KMS напрямую (И к нам и к ним..
+    // Доступ к Gitlab, тест автоматической отриски блоксхем для бота (отталкиваясь от исходного кода БП)
+    // Проверка возможности прописывания интерграционных стыков (сложная интеграция, простая интеграция). 
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       

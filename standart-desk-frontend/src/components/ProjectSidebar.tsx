@@ -2,6 +2,9 @@ import React from 'react';
 import { Page } from '../types';
 import '../styles/components.css';
 
+// Добавить ФИО ответственного (из списка пользователей)
+// Добавить папки
+
 interface ProjectSidebarProps {
   pages: Page[];
   currentPageId?: number;

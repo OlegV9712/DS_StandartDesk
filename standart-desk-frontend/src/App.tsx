@@ -7,6 +7,7 @@ import { ProjectEditor } from './pages/ProjectEditor';
 import { TaskManager } from './pages/TaskManager';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { Settings } from './pages/Settings';
+import { BotAssistant } from './pages/BotAssistant';
 import { Layout } from './components/Layout';
 import SMSAdmin from './pages/SMSAdmin';
 import './styles/globals.css';
@@ -52,6 +53,15 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <ProjectEditor />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/bot"
+          element={
+            <ProtectedRoute>
+              <BotAssistant />
             </ProtectedRoute>
           }
         />

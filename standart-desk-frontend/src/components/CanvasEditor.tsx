@@ -8,9 +8,16 @@ interface Block {
   y: number;
   width: number;
   height: number;
-  type: 'process' | 'decision' | 'start' | 'end' | 'data';
+  type: 'process' | 'decision' | 'start' | 'end' | 'data' | 'message' | 'button_container' | 'integration';
   label: string;
   color: string;
+  text?: string;
+  buttons?: { id: string; label: string; nextBlockId?: string }[];
+  integrationConfig?: {
+    method: string;
+    parameters: Record<string, any>;
+    description?: string;
+  };
 }
 
 interface Connection {
@@ -22,6 +29,7 @@ interface Connection {
 
 interface CanvasEditorProps {
   projectId?: number;
+  projectType?: number; // 0 = Algorithm, 1 = AssistantBot
   blockSchema?: BlockSchema | null;
   onSave?: (content: string) => Promise<void>;
 }
@@ -29,7 +37,7 @@ interface CanvasEditorProps {
 const BLOCK_WIDTH = 120;
 const BLOCK_HEIGHT = 80;
 
-export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, onSave }) => {
+export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, projectType = 0, onSave }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -191,6 +199,10 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, onSave 
               ctx.beginPath();
               ctx.ellipse(targetBlock.x + targetBlock.width / 2, targetBlock.y + targetBlock.height / 2, targetBlock.width / 2, targetBlock.height / 2, 0, 0, 2 * Math.PI);
               ctx.stroke();
+            } else if (targetBlock.type === 'message' || targetBlock.type === 'button_container' || targetBlock.type === 'integration') {
+              ctx.beginPath();
+              ctx.roundRect(targetBlock.x, targetBlock.y, targetBlock.width, targetBlock.height, 8);
+              ctx.stroke();
             } else {
               ctx.strokeRect(targetBlock.x, targetBlock.y, targetBlock.width, targetBlock.height);
             }
@@ -224,7 +236,16 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, onSave 
       } else if (block.type === 'start' || block.type === 'end') {
         ctx.beginPath();
         ctx.ellipse(block.x + block.width / 2, block.y + block.height / 2, block.width / 2, block.height / 2, 0, 0, 2 * Math.PI);
+      } else if (block.type === 'message') {
+        // Message block - rounded rectangle
+        ctx.beginPath();
+        ctx.roundRect(block.x, block.y, block.width, block.height, 8);
+      } else if (block.type === 'button_container' || block.type === 'integration') {
+        // Container blocks - rounded rectangle
+        ctx.beginPath();
+        ctx.roundRect(block.x, block.y, block.width, block.height, 8);
       } else {
+        // Regular process blocks
         ctx.fillRect(block.x, block.y, block.width, block.height);
         ctx.strokeRect(block.x, block.y, block.width, block.height);
       }
@@ -234,10 +255,14 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, onSave 
 
       // Draw text
       ctx.fillStyle = '#000';
-      ctx.font = '14px Arial';
+      ctx.font = '12px Arial';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const words = block.label.split(' ');
+      
+      // For message blocks, use text; for others use label
+      const displayText = block.type === 'message' ? block.text : block.label;
+      const textContent = displayText || (block.type === 'message' ? 'Ответ бота' : block.label);
+      const words = textContent.split(' ');
       let y = block.y + block.height / 2 - (words.length - 1) * 7;
       words.forEach(word => {
         ctx.fillText(word, block.x + block.width / 2, y, block.width - 10);
@@ -384,15 +409,30 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, onSave 
   }, [selectedBlockId, connectMode, connectFromId]);
 
   const addBlock = (type: Block['type']) => {
+    const blockTypeDefaults: Record<Block['type'], { color: string; label: string; width: number; height: number }> = {
+      process: { color: '#E8F4F8', label: `Блок ${blocks.length + 1}`, width: BLOCK_WIDTH, height: BLOCK_HEIGHT },
+      decision: { color: '#FFF4E6', label: `Решение ${blocks.length + 1}`, width: BLOCK_WIDTH, height: BLOCK_HEIGHT },
+      start: { color: '#E8F5E9', label: 'НАЧАЛО', width: BLOCK_WIDTH, height: BLOCK_HEIGHT },
+      end: { color: '#FFEBEE', label: 'КОНЕЦ', width: BLOCK_WIDTH, height: BLOCK_HEIGHT },
+      data: { color: '#F3E5F5', label: `Данные ${blocks.length + 1}`, width: BLOCK_WIDTH, height: BLOCK_HEIGHT },
+      message: { color: '#E3F2FD', label: 'Введите ответ...', width: 150, height: 80 },
+      button_container: { color: '#FFF9C4', label: 'Контейнер кнопок', width: 140, height: 100 },
+      integration: { color: '#F0F4C3', label: 'Интеграция', width: 140, height: 80 },
+    };
+
+    const defaults = blockTypeDefaults[type];
     const newBlock: Block = {
       id: `block-${Date.now()}`,
       x: 150,
       y: 150,
-      width: BLOCK_WIDTH,
-      height: BLOCK_HEIGHT,
+      width: defaults.width,
+      height: defaults.height,
       type,
-      label: `Блок ${blocks.length + 1}`,
-      color: '#E8F4F8'
+      label: defaults.label,
+      color: defaults.color,
+      ...(type === 'message' && { text: 'Здравствуйте! Чем я могу вам помочь?' }),
+      ...(type === 'button_container' && { buttons: [] }),
+      ...(type === 'integration' && { integrationConfig: { method: '', parameters: {}, description: '' } }),
     };
     setBlocks([...blocks, newBlock]);
     setSelectedBlockId(newBlock.id);
@@ -436,21 +476,44 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, onSave 
   return (
     <div className="canvas-editor">
       <div className="canvas-toolbar">
-        <button onClick={() => addBlock('process')} className="btn btn-sm" title="Добавить процесс (Ctrl+P)">
-          ➕ Процесс
-        </button>
-        <button onClick={() => addBlock('decision')} className="btn btn-sm" title="Добавить решение (Ctrl+D)">
-          🔷 Решение
-        </button>
-        <button onClick={() => addBlock('start')} className="btn btn-sm" title="Добавить начало">
-          ◯ Начало
-        </button>
-        <button onClick={() => addBlock('end')} className="btn btn-sm" title="Добавить конец">
-          ◯ Конец
-        </button>
-        <button onClick={() => addBlock('data')} className="btn btn-sm" title="Добавить данные">
-          📋 Данные
-        </button>
+        {/* Algorithm flowchart blocks */}
+        {projectType === 0 && (
+          <>
+            <button onClick={() => addBlock('process')} className="btn btn-sm" title="Добавить процесс">
+              ➕ Процесс
+            </button>
+            <button onClick={() => addBlock('decision')} className="btn btn-sm" title="Добавить решение">
+              🔷 Решение
+            </button>
+            <button onClick={() => addBlock('start')} className="btn btn-sm" title="Добавить начало">
+              ◯ Начало
+            </button>
+            <button onClick={() => addBlock('end')} className="btn btn-sm" title="Добавить конец">
+              ◯ Конец
+            </button>
+            <button onClick={() => addBlock('data')} className="btn btn-sm" title="Добавить данные">
+              📋 Данные
+            </button>
+          </>
+        )}
+
+        {/* Assistant bot scenario blocks */}
+        {projectType === 1 && (
+          <>
+            <button onClick={() => addBlock('start')} className="btn btn-sm" title="Точка входа сценария - фраза при запуске">
+              🚀 Начало
+            </button>
+            <button onClick={() => addBlock('message')} className="btn btn-sm" title="Ответ бота пользователю">
+              💬 Ответ
+            </button>
+            <button onClick={() => addBlock('button_container')} className="btn btn-sm" title="Контейнер для кнопок ответов">
+              🔘 Кнопки
+            </button>
+            <button onClick={() => addBlock('integration')} className="btn btn-sm" title="Интеграционный блок - для проверок и логики">
+              ⚙️ Интеграция
+            </button>
+          </>
+        )}
 
         <div style={{ borderLeft: '1px solid #ddd', margin: '0 10px', height: '30px' }}></div>
 
@@ -467,7 +530,7 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, onSave 
                 }
               }}
               className={`btn btn-sm ${connectMode && connectFromId === selectedBlockId ? 'btn-active' : ''}`}
-              title="Режим соединения (Ctrl+3)"
+              title="Режим соединения - проложить путь сценария"
             >
               🔗 Соединить
             </button>
@@ -484,15 +547,27 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, onSave 
 
         {selectedBlock && (
           <>
-            <input
-              type="text"
-              value={selectedBlock.label}
-              onChange={e => updateSelectedBlock({ label: e.target.value })}
-              placeholder="Текст блока"
-              className="form-input"
-              style={{ width: '150px' }}
-              title="Редактировать текст блока"
-            />
+            {selectedBlock.type === 'message' && (
+              <textarea
+                value={selectedBlock.text || ''}
+                onChange={e => updateSelectedBlock({ text: e.target.value })}
+                placeholder="Текст ответа бота"
+                className="form-input"
+                style={{ width: '200px', height: '60px', marginRight: '10px', padding: '5px' }}
+                title="Редактировать ответ бота"
+              />
+            )}
+            {selectedBlock.type !== 'message' && (
+              <input
+                type="text"
+                value={selectedBlock.label}
+                onChange={e => updateSelectedBlock({ label: e.target.value })}
+                placeholder="Текст блока"
+                className="form-input"
+                style={{ width: '150px' }}
+                title="Редактировать текст блока"
+              />
+            )}
             <input
               type="color"
               value={selectedBlock.color}
@@ -501,9 +576,9 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, onSave 
                 console.log('[CANVAS] Color changed for block', selectedBlockId, 'to', e.target.value);
               }}
               className="color-picker"
-              title="Выбрать цвет только для этого блока"
+              title="Выбрать цвет блока"
             />
-            <button onClick={deleteSelectedBlock} className="btn btn-sm" style={{ background: '#FFB6C1' }} title="Удалить блок (Delete)">
+            <button onClick={deleteSelectedBlock} className="btn btn-sm" style={{ background: '#FFB6C1' }} title="Удалить блок">
               🗑️ Удалить
             </button>
           </>
@@ -511,12 +586,12 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, onSave 
 
         <div style={{ borderLeft: '1px solid #ddd', margin: '0 10px', height: '30px', marginLeft: 'auto' }}></div>
 
-        <button onClick={() => setZoom(1)} className="btn btn-sm" title="Сброс масштаба (1:1)">
+        <button onClick={() => setZoom(1)} className="btn btn-sm" title="Сброс масштаба">
           🔍 1:1
         </button>
         <span className="zoom-display">{(zoom * 100).toFixed(0)}%</span>
 
-        <button onClick={saveCanvas} className="btn btn-primary btn-sm" title="Сохранить блок-схему в БД">
+        <button onClick={saveCanvas} className="btn btn-primary btn-sm" title="Сохранить сценарий/блок-схему">
           💾 Сохранить
         </button>
       </div>
