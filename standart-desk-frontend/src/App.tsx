@@ -9,6 +9,7 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { Settings } from './pages/Settings';
 import { BotAssistant } from './pages/BotAssistant';
 import { Layout } from './components/Layout';
+import { MaintenanceWrapper } from './components/MaintenanceWrapper';
 import SMSAdmin from './pages/SMSAdmin';
 import './styles/globals.css';
 
@@ -26,7 +27,13 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole?: strin
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <Layout>{children as React.ReactElement}</Layout>;
+  return (
+    <Layout>
+      <MaintenanceWrapper>
+        {children as React.ReactElement}
+      </MaintenanceWrapper>
+    </Layout>
+  );
 };
 
 const App: React.FC = () => {

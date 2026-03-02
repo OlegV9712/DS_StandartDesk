@@ -21,6 +21,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Comment> Comments { get; set; } = null!;
     public DbSet<AuditLog> AuditLogs { get; set; } = null!;
     public DbSet<Notification> Notifications { get; set; } = null!;
+    public DbSet<ChatSession> ChatSessions { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -204,5 +205,19 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Comment>()
             .HasIndex(c => new { c.TaskId, c.CreatedAt })
             .IsDescending(false, true);
+
+        // ChatSession Configuration
+        modelBuilder.Entity<ChatSession>()
+            .HasKey(cs => cs.Id);
+        modelBuilder.Entity<ChatSession>()
+            .HasOne(cs => cs.Project)
+            .WithMany()
+            .HasForeignKey(cs => cs.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ChatSession>()
+            .HasIndex(cs => new { cs.ProjectId, cs.CreatedAt });
+        modelBuilder.Entity<ChatSession>()
+            .HasIndex(cs => cs.UserId)
+            .IsUnique(false);
     }
 }

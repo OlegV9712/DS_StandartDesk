@@ -6,16 +6,24 @@ import '../styles/task-board.css';
 interface TaskBoardProps {
   tasks: Task[];
   currentUserId: number;
+  language?: 'en' | 'ru';
   onReassign: (taskId: number) => void;
   onViewDetails: (taskId: number) => void;
   onStatusChange: (taskId: number, newStatus: number) => void;
 }
 
-const STATUS_LABELS: Record<number, string> = {
-  0: 'To Do',
+export const STATUS_LABELS_EN: Record<number, string> = {
+  0: 'New',
   1: 'In Progress',
   2: 'In Review',
   3: 'Done',
+};
+
+export const STATUS_LABELS_RU: Record<number, string> = {
+  0: 'Новая',
+  1: 'В работе',
+  2: 'На проверке',
+  3: 'Завершена',
 };
 
 const STATUS_COLORS: Record<number, string> = {
@@ -28,12 +36,14 @@ const STATUS_COLORS: Record<number, string> = {
 export const TaskBoard: React.FC<TaskBoardProps> = ({
   tasks,
   currentUserId,
+  language = 'en',
   onReassign,
   onViewDetails,
   onStatusChange,
 }) => {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragSource, setDragSource] = useState<number | null>(null);
+  const statusLabels = language === 'ru' ? STATUS_LABELS_RU : STATUS_LABELS_EN;
 
   const getTasksByStatus = (status: number) => {
     return tasks.filter(task => task.status === status);
@@ -89,7 +99,7 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
                     className="task-column__status-dot"
                     style={{ backgroundColor: STATUS_COLORS[status] }}
                   ></div>
-                  <h3 className="task-column__title">{STATUS_LABELS[status]}</h3>
+                  <h3 className="task-column__title">{statusLabels[status]}</h3>
                 </div>
                 <span className="task-column__count">{taskCount}</span>
               </div>

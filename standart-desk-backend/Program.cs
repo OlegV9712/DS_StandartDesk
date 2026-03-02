@@ -39,27 +39,31 @@ builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IVersioningService, VersioningService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ChatbotService>();
 
 // SignalR
 builder.Services.AddSignalR();
 
-// CORS
+// CORS - Allow frontend access
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", builder =>
     {
         builder
+            .SetIsOriginAllowedToAllowWildcardSubdomains()
             .WithOrigins(
                 "http://localhost:5173", 
                 "https://localhost:5173",
                 "http://127.0.0.1:5173",
                 "https://127.0.0.1:5173",
                 "http://localhost:3000",
-                "https://localhost:3000"
+                "https://localhost:3000",
+                "http://localhost:5000",
+                "http://127.0.0.1:5000"
             )
             .AllowAnyMethod()
             .AllowAnyHeader()
-            .AllowCredentials();
+            .Build();
     });
 });
 
@@ -125,10 +129,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
-// CORS must be called before Authorization
+// CORS MUST be first before other middleware
 app.UseCors("AllowFrontend");
+
+// Only redirect to HTTPS in production
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

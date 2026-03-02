@@ -27,6 +27,8 @@ export const TaskManager: React.FC = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [language, setLanguage] = useState<'en' | 'ru'>('en');
+  const [filterType, setFilterType] = useState<'all' | 'assigned' | 'unassigned'>('all');
 
   // Get current user from localStorage
   useEffect(() => {
@@ -251,6 +253,22 @@ export const TaskManager: React.FC = () => {
     }
   };
 
+  // Filter tasks based on selected filter
+  const getFilteredTasks = () => {
+    if (filterType === 'all') {
+      return tasks;
+    } else if (filterType === 'assigned') {
+      // Tasks assigned to current user
+      return tasks.filter(t => t.assignedToUserId === currentUser?.id);
+    } else if (filterType === 'unassigned') {
+      // Tasks with no assignee
+      return tasks.filter(t => !t.assignedToUserId);
+    }
+    return tasks;
+  };
+
+  const filteredTasks = getFilteredTasks();
+
   const selectedTask = selectedTaskId
     ? tasks.find((t) => t.id === selectedTaskId)
     : null;
@@ -258,21 +276,39 @@ export const TaskManager: React.FC = () => {
   return (
     <div className="task-manager">
       <header className="task-manager__header">
-        <h1 className="task-manager__title">Task Manager</h1>
+        <h1 className="task-manager__title">{language === 'ru' ? 'Управление задачами' : 'Task Manager'}</h1>
         <div className="task-manager__header-actions">
+          {/* Language switcher */}
+          <div className="task-manager__language-switcher">
+            <button
+              className={`lang-btn ${language === 'en' ? 'active' : ''}`}
+              onClick={() => setLanguage('en')}
+              title="English"
+            >
+              EN
+            </button>
+            <button
+              className={`lang-btn ${language === 'ru' ? 'active' : ''}`}
+              onClick={() => setLanguage('ru')}
+              title="Русский"
+            >
+              RU
+            </button>
+          </div>
+
           <button
             className="task-manager__create-btn"
             onClick={() => setIsCreateTaskModalOpen(true)}
-            title="Create new task"
+            title={language === 'ru' ? 'Создать новую задачу' : 'Create new task'}
           >
-            ➕ New Task
+            {language === 'ru' ? '➕ Новая задача' : '➕ New Task'}
           </button>
           <button
             className="task-manager__export-btn"
             onClick={() => setIsExportModalOpen(true)}
-            title="Export tasks"
+            title={language === 'ru' ? 'Экспортировать задачи' : 'Export tasks'}
           >
-            📥 Export
+            {language === 'ru' ? '📥 Экспорт' : '📥 Export'}
           </button>
           <NotificationCenter
             notifications={notifications}
@@ -284,17 +320,45 @@ export const TaskManager: React.FC = () => {
         </div>
       </header>
 
+      {/* Filter toolbar */}
+      <div className="task-manager__filters">
+        <div className="task-manager__filter-group">
+          <span className="task-manager__filter-label">
+            {language === 'ru' ? 'Фильтр:' : 'Filter:'}
+          </span>
+          <button
+            className={`filter-btn ${filterType === 'all' ? 'active' : ''}`}
+            onClick={() => setFilterType('all')}
+          >
+            {language === 'ru' ? 'Все задачи' : 'All Tasks'}
+          </button>
+          <button
+            className={`filter-btn ${filterType === 'assigned' ? 'active' : ''}`}
+            onClick={() => setFilterType('assigned')}
+          >
+            {language === 'ru' ? 'Назначены на меня' : 'Assigned to Me'}
+          </button>
+          <button
+            className={`filter-btn ${filterType === 'unassigned' ? 'active' : ''}`}
+            onClick={() => setFilterType('unassigned')}
+          >
+            {language === 'ru' ? 'Нераспределённые' : 'Unassigned'}
+          </button>
+        </div>
+      </div>
+
       {error && <div className="task-manager__error">{error}</div>}
 
       {loading ? (
         <div className="task-manager__loading">
           <div className="spinner"></div>
-          <p>Loading tasks...</p>
+          <p>{language === 'ru' ? 'Загрузка задач...' : 'Loading tasks...'}</p>
         </div>
       ) : (
         <TaskBoard
-          tasks={tasks}
+          tasks={filteredTasks}
           currentUserId={currentUser?.id || 0}
+          language={language}
           onReassign={handleReassignClick}
           onViewDetails={handleViewDetails}
           onStatusChange={handleStatusChange}

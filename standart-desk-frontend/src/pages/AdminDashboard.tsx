@@ -41,9 +41,11 @@ export const AdminDashboard: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [logsLoading, setLogsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'logs'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'logs' | 'settings'>('stats');
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [newUser, setNewUser] = useState({ username: '', email: '', password: '', fullName: '', role: 2 });
+  const [maintenanceMode, setMaintenanceMode] = useState(localStorage.getItem('maintenanceMode') === 'true');
+  const [showNotification, setShowNotification] = useState(false);
   const authUser = useAuth((state) => state.user);
   const token = useAuth((state) => state.user?.token);
 
@@ -166,6 +168,12 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setActiveTab('logs')}
         >
           📋 Logs
+        </button>
+        <button
+          className={`admin-tab ${activeTab === 'settings' ? 'active' : ''}`}
+          onClick={() => setActiveTab('settings')}
+        >
+          ⚙️ Settings
         </button>
       </div>
 
@@ -337,6 +345,68 @@ export const AdminDashboard: React.FC = () => {
             )}
           </motion.div>
         )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="admin-settings"
+          >
+            <h2>⚙️ Site Settings</h2>
+            
+            <div className="settings-section">
+              <div className="setting-item">
+                <div className="setting-info">
+                  <h3>Maintenance Mode</h3>
+                  <p className="setting-description">
+                    When enabled, all sections will show a maintenance message. Perfect for updates!
+                  </p>
+                </div>
+
+                <div className={`toggle-switch ${maintenanceMode ? 'active' : ''}`}>
+                  <motion.button
+                    className="toggle-button"
+                    onClick={() => {
+                      const newValue = !maintenanceMode;
+                      setMaintenanceMode(newValue);
+                      localStorage.setItem('maintenanceMode', String(newValue));
+                      setShowNotification(true);
+                      setTimeout(() => setShowNotification(false), 3000);
+                    }}
+                    type="button"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <motion.span
+                      className="toggle-circle"
+                      animate={{
+                        x: maintenanceMode ? 34 : 0,
+                      }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    />
+                  </motion.button>
+                  <span className="status-text">
+                    {maintenanceMode ? '🟢 ON' : '🔴 OFF'}
+                  </span>
+                </div>
+              </div>
+
+              {maintenanceMode && (
+                <motion.div 
+                  className="maintenance-preview" 
+                  initial={{ opacity: 0, height: 0 }} 
+                  animate={{ opacity: 1, height: 'auto' }}
+                >
+                  <p className="preview-label">Preview - Users will see:</p>
+                  <p className="preview-text">
+                    "Ухххх ты, наш разработчик что-то совсем разошелся и скоро обновит тут все! Поэтому ничего не работает, но вы подождите немного, выпейте кофейку или чая, отдохните и вернитесь позднее 😊"
+                  </p>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+        )}
       </div>
 
       {/* Create User Modal */}
@@ -395,6 +465,17 @@ export const AdminDashboard: React.FC = () => {
             </form>
           </motion.div>
         </div>
+      )}
+
+      {showNotification && (
+        <motion.div
+          className="notification"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+        >
+          ✅ Maintenance mode {maintenanceMode ? 'enabled' : 'disabled'}
+        </motion.div>
       )}
     </div>
   );

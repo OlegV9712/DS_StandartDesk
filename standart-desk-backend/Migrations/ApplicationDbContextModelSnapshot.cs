@@ -142,6 +142,48 @@ namespace StandartDesk.Migrations
                     b.ToTable("BlockSchemaVersions");
                 });
 
+            modelBuilder.Entity("StandartDesk.Models.ChatSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ConversationHistory")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CurrentBlockId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsEnded")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SessionContext")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("ProjectId", "CreatedAt");
+
+                    b.ToTable("ChatSessions");
+                });
+
             modelBuilder.Entity("StandartDesk.Models.Comment", b =>
                 {
                     b.Property<int>("Id")
@@ -538,6 +580,17 @@ namespace StandartDesk.Migrations
                     b.Navigation("BlockSchema");
 
                     b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("StandartDesk.Models.ChatSession", b =>
+                {
+                    b.HasOne("StandartDesk.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("StandartDesk.Models.Comment", b =>

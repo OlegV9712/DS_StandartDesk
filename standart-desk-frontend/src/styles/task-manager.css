@@ -111,6 +111,90 @@
   }
 }
 
+/* Language Switcher */
+.task-manager__language-switcher {
+  display: flex;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.lang-btn {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.lang-btn:hover {
+  color: white;
+}
+
+.lang-btn.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Filter Toolbar */
+.task-manager__filters {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 16px 24px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 72px;
+  z-index: 50;
+}
+
+.task-manager__filter-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.task-manager__filter-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #6b7280;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.filter-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+  background: #f3f4f6;
+}
+
+.filter-btn.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .task-manager__header {
@@ -121,4 +205,16 @@
   .task-manager__title {
     font-size: 24px;
   }
-}
+
+  .task-manager__header-actions {
+    flex-wrap: wrap;
+  }
+
+  .task-manager__filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .task-manager__filter-group {
+    width: 100%;
+    flex-wrap: wrap;
