@@ -10,8 +10,9 @@ public class CreateProjectDto
 
 public class UpdateProjectDto
 {
-    public string Name { get; set; } = string.Empty;
+    public string? Name { get; set; }
     public string? Description { get; set; }
+    public int? FolderId { get; set; }
 }
 
 public class MoveProjectDto

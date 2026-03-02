@@ -20,6 +20,8 @@ export const Dashboard: React.FC = () => {
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [draggedProjectId, setDraggedProjectId] = useState<number | null>(null);
+  const [projectName, setProjectName] = useState('');
+  const [projectDescription, setProjectDescription] = useState('');
   const navigate = useNavigate();
   const user = useAuth((state) => state.user);
 
@@ -49,6 +51,8 @@ export const Dashboard: React.FC = () => {
       const typeValue = type === 'algorithm' ? 0 : 1;
       await apiService.createProject(name, description, typeValue, selectedFolderId || undefined, user?.id || 1);
       setShowTypeModal(false);
+      setProjectName('');
+      setProjectDescription('');
       await fetchData();
     } catch (err) {
       console.error('Error creating project:', err);
@@ -119,12 +123,13 @@ export const Dashboard: React.FC = () => {
     e.preventDefault();
     if (draggedProjectId) {
       try {
-        // Update locally first for UI feedback
+        // Call API to update project's folder
+        await apiService.updateProject(draggedProjectId, undefined, undefined, folderId, user?.id || 1);
+        // Update locally for UI feedback
         const updatedProjects = projects.map(p =>
           p.id === draggedProjectId ? { ...p, folderId } : p
         );
         setProjects(updatedProjects);
-        // TODO: Call API to persist the change if you have an endpoint for it
       } catch (err) {
         console.error('Error moving project:', err);
         setError('Failed to move project');
@@ -133,10 +138,12 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDropOnRoot = (e: React.DragEvent) => {
+  const handleDropOnRoot = async (e: React.DragEvent) => {
     e.preventDefault();
     if (draggedProjectId) {
       try {
+        // Call API to update project's folder to null
+        await apiService.updateProject(draggedProjectId, undefined, undefined, null, user?.id || 1);
         const updatedProjects = projects.map(p =>
           p.id === draggedProjectId ? { ...p, folderId: null } : p
         );
@@ -262,12 +269,49 @@ export const Dashboard: React.FC = () => {
           <h1>📁 Projects</h1>
           <p>Welcome, {user?.fullName || user?.username}!</p>
         </div>
-        <button
-          className="btn-primary"
-          onClick={() => setShowTypeModal(true)}
-        >
-          ➕ New Project
-        </button>
+        <div className="header-buttons">
+          <button
+            className="btn-primary"
+            onClick={() => setShowTypeModal(true)}
+          >
+            ➕ New Project
+          </button>
+          {showNewFolderInput ? (
+            <div className="header-folder-input">
+              <input
+                type="text"
+                placeholder="Folder name..."
+                value={newFolderName}
+                autoFocus
+                onChange={(e) => setNewFolderName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCreateFolder();
+                  if (e.key === 'Escape') {
+                    setShowNewFolderInput(false);
+                    setNewFolderName('');
+                  }
+                }}
+              />
+              <button className="btn-confirm" onClick={handleCreateFolder}>✓</button>
+              <button
+                className="btn-cancel"
+                onClick={() => {
+                  setShowNewFolderInput(false);
+                  setNewFolderName('');
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <button
+              className="btn-secondary"
+              onClick={() => setShowNewFolderInput(true)}
+            >
+              ➕ New Folder
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Error message */}
@@ -291,44 +335,6 @@ export const Dashboard: React.FC = () => {
         <div className="projects-view">
           {/* Folders and Root Projects */}
           <div className="folders-section">
-            {/* New folder button */}
-            <div className="new-folder-control">
-              {showNewFolderInput ? (
-                <div className="new-folder-input-group">
-                  <input
-                    type="text"
-                    placeholder="Folder name..."
-                    value={newFolderName}
-                    autoFocus
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleCreateFolder();
-                      if (e.key === 'Escape') {
-                        setShowNewFolderInput(false);
-                        setNewFolderName('');
-                      }
-                    }}
-                  />
-                  <button onClick={handleCreateFolder}>Create</button>
-                  <button
-                    onClick={() => {
-                      setShowNewFolderInput(false);
-                      setNewFolderName('');
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <button
-                  className="btn-secondary"
-                  onClick={() => setShowNewFolderInput(true)}
-                >
-                  ➕ New Folder
-                </button>
-              )}
-            </div>
-
             {/* Folders tree */}
             <div className="folders-tree">
               {folders
@@ -392,12 +398,16 @@ export const Dashboard: React.FC = () => {
       {/* Project Type Modal */}
       <ProjectTypeModal
         isOpen={showTypeModal}
-        onClose={() => setShowTypeModal(false)}
+        onClose={() => {
+          setShowTypeModal(false);
+          setProjectName('');
+          setProjectDescription('');
+        }}
         onSelectType={handleCreateProject}
-        projectName=""
-        projectDescription=""
-        onNameChange={() => {}}
-        onDescriptionChange={() => {}}
+        projectName={projectName}
+        projectDescription={projectDescription}
+        onNameChange={setProjectName}
+        onDescriptionChange={setProjectDescription}
       />
     </div>
   );

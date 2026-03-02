@@ -166,6 +166,8 @@ export const BotAssistant: React.FC = () => {
   };
 
   const handleButtonClick = (button: { id: string; title: string; payload: string; nextBlockId?: string }) => {
+    if (!executor || isProcessing) return;
+
     const userMessage: Message = {
       id: Math.random().toString(),
       text: button.title,
@@ -177,18 +179,20 @@ export const BotAssistant: React.FC = () => {
     setIsProcessing(true);
 
     try {
-      // Process button click with next block ID
-      const botResponse = executor?.processUserInput(button.title, button.nextBlockId);
+      // Process button click - pass the button's ID as selectedButtonId
+      // The executor will find what's connected FROM this button
+      const botResponse = executor.processUserInput('', button.nextBlockId || button.id);
       
       if (botResponse) {
+        const message: Message = {
+          ...botResponse,
+          createdAt: new Date()
+        };
+        
         setTimeout(() => {
-          const message: Message = {
-            ...botResponse,
-            createdAt: new Date()
-          };
           setMessages((prev) => [...prev, message]);
           setIsProcessing(false);
-        }, 500);
+        }, 300);
       } else {
         setIsProcessing(false);
       }

@@ -142,9 +142,17 @@ public class ProjectsController : ControllerBase
         if (project == null)
             return NotFound();
 
-        var oldData = new { project.Name, project.Description };
-        project.Name = dto.Name;
-        project.Description = dto.Description;
+        var oldData = new { project.Name, project.Description, project.FolderId };
+        
+        if (!string.IsNullOrEmpty(dto.Name))
+            project.Name = dto.Name;
+        
+        if (dto.Description != null)
+            project.Description = dto.Description;
+        
+        if (dto.FolderId != null || (dto.FolderId == null && oldData.FolderId != null))
+            project.FolderId = dto.FolderId;
+        
         project.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();

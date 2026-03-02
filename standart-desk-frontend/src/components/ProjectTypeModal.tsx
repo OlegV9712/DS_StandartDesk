@@ -24,6 +24,12 @@ export const ProjectTypeModal: React.FC<ProjectTypeModalProps> = ({
   const [step, setStep] = useState<'details' | 'type'>('details');
   const [selectedType, setSelectedType] = useState<'algorithm' | 'assistant_bot' | null>(null);
 
+  const handleClose = () => {
+    setStep('details');
+    setSelectedType(null);
+    onClose();
+  };
+
   const handleNext = () => {
     if (!projectName.trim()) {
       alert('Project name is required');
@@ -33,14 +39,14 @@ export const ProjectTypeModal: React.FC<ProjectTypeModalProps> = ({
       onSelectType(selectedType, projectName, projectDescription);
       setStep('details');
       setSelectedType(null);
-      onClose();
+      handleClose();
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleClose}>
       <motion.div
         className="modal modal-large"
         onClick={(e) => e.stopPropagation()}
@@ -83,7 +89,7 @@ export const ProjectTypeModal: React.FC<ProjectTypeModalProps> = ({
               >
                 Next: Select Type
               </button>
-              <button type="button" className="btn-secondary" onClick={onClose}>
+              <button type="button" className="btn-secondary" onClick={handleClose}>
                 Cancel
               </button>
             </div>

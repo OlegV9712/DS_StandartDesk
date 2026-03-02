@@ -104,8 +104,12 @@ class ApiService {
     return this.client.post<Project>('/projects', { name, description, type, folderId }, { params: { userId } });
   }
 
-  updateProject(projectId: number, name: string, description?: string, userId: number = 1) {
-    return this.client.put(`/projects/${projectId}`, { name, description }, { params: { userId } });
+  updateProject(projectId: number, name?: string, description?: string, folderId?: number | null, userId: number = 1) {
+    const data: any = {};
+    if (name !== undefined) data.name = name;
+    if (description !== undefined) data.description = description;
+    if (folderId !== undefined) data.folderId = folderId;
+    return this.client.put(`/projects/${projectId}`, data, { params: { userId } });
   }
 
   deleteProject(projectId: number, userId: number = 1) {

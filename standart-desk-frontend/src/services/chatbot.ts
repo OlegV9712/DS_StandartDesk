@@ -81,8 +81,14 @@ export class ChatbotExecutor {
     let nextBlockId: string | null = null;
 
     if (selectedButtonId) {
-      // User clicked a button - get the next block from button
-      nextBlockId = selectedButtonId;
+      // User clicked a button - find what block is connected FROM it
+      const connectedBlocks = this.getConnectedBlocks(selectedButtonId);
+      if (connectedBlocks.length > 0) {
+        nextBlockId = connectedBlocks[0];
+      } else {
+        // No connected block, might be the end
+        nextBlockId = selectedButtonId;
+      }
     } else if (this.currentBlockId) {
       // Try to find next block from current
       const connectedBlocks = this.getConnectedBlocks(this.currentBlockId);
@@ -118,8 +124,18 @@ export class ChatbotExecutor {
           return this.createResponseWithButtons(nextBlock);
         }
 
-        // Handle start block
+        // Handle start block - show what's connected from start
         if (nextBlock.type === 'start') {
+          // Show message of start block or find what's connected
+          const connected = this.getConnectedBlocks(nextBlock.id);
+          if (connected.length > 0) {
+            const connectedBlock = this.getBlockById(connected[0]);
+            if (connectedBlock) {
+              this.currentBlockId = connectedBlock.id;
+              return this.createResponseWithButtons(connectedBlock);
+            }
+          }
+          // Fallback: show start message
           return this.createResponseWithButtons(nextBlock);
         }
 
@@ -144,46 +160,43 @@ export class ChatbotExecutor {
    * Creates a response with buttons
    */
   private createResponseWithButtons(block: Block): ChatMessage {
-    // If block has explicit buttons, use those
-    if (block.buttons && block.buttons.length > 0) {
-      const message: ChatMessage = {
-        id: block.id,
-        text: block.text || block.label || 'Select an option:',
-        sender: 'bot',
-        buttons: block.buttons.map((btn) => {
-          let nextBlockId = btn.nextBlockId;
-          if (!nextBlockId) {
-            // Try to find a block connected from this button
-            const connected = this.getConnectedBlocks(btn.id);
-            nextBlockId = connected.length > 0 ? connected[0] : undefined;
-          }
-          return {
-            id: btn.id,
-            title: btn.label,
-            payload: btn.label,
-            nextBlockId
-          };
-        })
-      };
-      this.conversationHistory.push(message);
-      return message;
-    }
+    let messageText = block.text || block.label || 'Select an option:';
+    let buttons = block.buttons || [];
 
-    // If no buttons, try to find button_container in next blocks
-    const connectedBlocks = this.getConnectedBlocks(block.id);
-    for (const blockId of connectedBlocks) {
-      const nextBlock = this.getBlockById(blockId);
-      if (nextBlock && nextBlock.type === 'button_container') {
-        return this.createResponseWithButtons(nextBlock);
+    // If block is message type, look for connected button_container
+    if (block.type === 'message' && buttons.length === 0) {
+      const connectedBlocks = this.getConnectedBlocks(block.id);
+      for (const blockId of connectedBlocks) {
+        const nextBlock = this.getBlockById(blockId);
+        if (nextBlock && nextBlock.type === 'button_container') {
+          // Use the button_container's buttons
+          buttons = nextBlock.buttons || [];
+          break;
+        }
       }
     }
 
-    // Default message without buttons
+    // If block is button_container, use its buttons
+    if (block.type === 'button_container') {
+      buttons = block.buttons || [];
+    }
+
     const message: ChatMessage = {
       id: block.id,
-      text: block.text || block.label || 'Processing...',
-      sender: 'bot'
+      text: messageText,
+      sender: 'bot',
+      buttons: buttons.map((btn, btnIndex) => {
+        // Each button should pass its own ID as the selectedButtonId
+        // The executor will then find what's connected from that button
+        return {
+          id: btn.id || `btn-${btnIndex}`,
+          title: btn.label,
+          payload: btn.label,
+          nextBlockId: btn.id // Pass button ID so processUserInput knows which button
+        };
+      })
     };
+
     this.conversationHistory.push(message);
     return message;
   }
