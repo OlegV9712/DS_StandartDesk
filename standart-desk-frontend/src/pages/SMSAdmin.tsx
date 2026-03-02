@@ -112,10 +112,10 @@ const SMSAdminPage: React.FC = () => {
         const branchId = findValue(['branch_id', 'id']) || `Region_${idx + 1}`;
         const branchName = findValue(['branch_name', 'название']) || 'Unknown';
         const marketingName = findValue(['маркетинговое', 'tariff_name', 'название']) || '';
-        const price = findValue(['ap', 'цена', 'рублей']) || '0';
+        const price = findValue(['ap', 'ап', 'цена', 'рублей', 'tobe']) || '0';
         const gb = findValue(['гб', 'gb', 'данные']) || '0';
         const smsCount = findValue(['sms', 'смс']) || '0';
-        const minutes = findValue(['минуты', 'minutes', 'minuts']) || '0';
+        const minutes = findValue(['минуты', 'minutes', 'minuts', 'мин']) || '0';
         const direction = findValue(['направление', 'direction']) || 'РФ';
         const combination = findValue(['комбинация', 'combination']) || 'Standard';
 

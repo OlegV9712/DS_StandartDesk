@@ -37,6 +37,10 @@ export class ChatbotExecutor {
     const startBlock = this.getBlockById(this.currentBlockId);
     if (!startBlock || startBlock.type !== 'start') return null;
 
+    // Find what block is connected FROM the start block
+    const connectedBlocks = this.getConnectedBlocks(startBlock.id);
+    let nextBlockId = connectedBlocks.length > 0 ? connectedBlocks[0] : startBlock.id;
+
     // Return start block as a button to click
     const message: ChatMessage = {
       id: 'init',
@@ -46,7 +50,7 @@ export class ChatbotExecutor {
         id: startBlock.id,
         title: startBlock.label || '🚀 Start',
         payload: startBlock.label,
-        nextBlockId: startBlock.id
+        nextBlockId: nextBlockId  // Pass the actually connected block ID, not start itself
       }]
     };
 
@@ -81,13 +85,19 @@ export class ChatbotExecutor {
     let nextBlockId: string | null = null;
 
     if (selectedButtonId) {
-      // User clicked a button - find what block is connected FROM it
-      const connectedBlocks = this.getConnectedBlocks(selectedButtonId);
-      if (connectedBlocks.length > 0) {
-        nextBlockId = connectedBlocks[0];
-      } else {
-        // No connected block, might be the end
+      // User clicked a button with nextBlockId (could be explicit target or container block)
+      // First try to use it as direct target
+      let targetBlock = this.getBlockById(selectedButtonId);
+      
+      if (targetBlock) {
+        // selectedButtonId is a valid block ID, try to use it
         nextBlockId = selectedButtonId;
+      } else {
+        // selectedButtonId might be a container block, find what's connected from it
+        const connectedBlocks = this.getConnectedBlocks(selectedButtonId);
+        if (connectedBlocks.length > 0) {
+          nextBlockId = connectedBlocks[0];
+        }
       }
     } else if (this.currentBlockId) {
       // Try to find next block from current
@@ -162,15 +172,17 @@ export class ChatbotExecutor {
   private createResponseWithButtons(block: Block): ChatMessage {
     let messageText = block.text || block.label || 'Select an option:';
     let buttons = block.buttons || [];
+    let buttonsSourceBlockId = block.id; // Track which block the buttons come from
 
     // If block is message type, look for connected button_container
     if (block.type === 'message' && buttons.length === 0) {
       const connectedBlocks = this.getConnectedBlocks(block.id);
       for (const blockId of connectedBlocks) {
         const nextBlock = this.getBlockById(blockId);
-        if (nextBlock && nextBlock.type === 'button_container') {
-          // Use the button_container's buttons
+        if (nextBlock && (nextBlock.type === 'button_container' || (nextBlock.buttons && nextBlock.buttons.length > 0))) {
+          // Use this block's buttons
           buttons = nextBlock.buttons || [];
+          buttonsSourceBlockId = blockId; // Track that buttons come from this block
           break;
         }
       }
@@ -186,13 +198,22 @@ export class ChatbotExecutor {
       text: messageText,
       sender: 'bot',
       buttons: buttons.map((btn, btnIndex) => {
-        // Each button should pass its own ID as the selectedButtonId
-        // The executor will then find what's connected from that button
+        // Check if button has its own next block ID
+        let nextBlockId: string | undefined = btn.nextBlockId;
+        
+        // If not, find what's connected from the button source block
+        if (!nextBlockId) {
+          const connectedFromSource = this.getConnectedBlocks(buttonsSourceBlockId);
+          if (connectedFromSource.length > 0) {
+            nextBlockId = connectedFromSource[0];
+          }
+        }
+        
         return {
           id: btn.id || `btn-${btnIndex}`,
           title: btn.label,
           payload: btn.label,
-          nextBlockId: btn.id // Pass button ID so processUserInput knows which button
+          nextBlockId
         };
       })
     };
