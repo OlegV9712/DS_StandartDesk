@@ -24,7 +24,8 @@ interface Connection {
   id: string;
   fromBlockId: string;
   toBlockId: string;
-  label?: string;
+  label?: string;  // Текст кнопки (если соединение от кнопки)
+  fromButtonId?: string;  // ID кнопки если соединение от кнопки
 }
 
 interface CanvasEditorProps {
@@ -42,6 +43,8 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, project
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);  // Для выбора соединения
+  const [selectedButtonId, setSelectedButtonId] = useState<string | null>(null);  // Для выбора кнопки в button_container
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -99,18 +102,37 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, project
     ctx.scale(zoom, zoom);
 
     // Draw connections
-    connections.forEach(conn => {
-      const fromBlock = blocks.find(b => b.id === conn.fromBlockId);
+    connections.forEach((conn) => {
+      let fromX, fromY;
+      
+      // Если соединение от кнопки, найти кнопку и рисовать от нее
+      if (conn.fromButtonId) {
+        const containerBlock = blocks.find(b => b.id === conn.fromBlockId);
+        const button = containerBlock?.buttons?.find(b => b.id === conn.fromButtonId);
+        if (containerBlock && button) {
+          // Рисовать от позиции кнопки (примерно внизу button_container)
+          fromX = containerBlock.x + containerBlock.width / 2;
+          fromY = containerBlock.y + containerBlock.height - 10;
+        }
+      } else {
+        // Обычное соединение от блока
+        const fromBlock = blocks.find(b => b.id === conn.fromBlockId);
+        if (fromBlock) {
+          fromX = fromBlock.x + fromBlock.width / 2;
+          fromY = fromBlock.y + fromBlock.height / 2;
+        }
+      }
+      
       const toBlock = blocks.find(b => b.id === conn.toBlockId);
-      if (fromBlock && toBlock) {
-        const fromX = fromBlock.x + fromBlock.width / 2;
-        const fromY = fromBlock.y + fromBlock.height / 2;
+      
+      if (fromX !== undefined && fromY !== undefined && toBlock) {
         const toX = toBlock.x + toBlock.width / 2;
         const toY = toBlock.y + toBlock.height / 2;
 
         // Draw curved line with bezier
-        ctx.strokeStyle = '#2C3E50';
-        ctx.lineWidth = 2.5 / zoom;
+        const isSelected = conn.id === selectedConnectionId;
+        ctx.strokeStyle = isSelected ? '#FF6B9D' : (conn.fromButtonId ? '#667eea' : '#2C3E50');  // Highlight if selected
+        ctx.lineWidth = (isSelected ? 3.5 : 2.5) / zoom;
         ctx.beginPath();
         ctx.moveTo(fromX, fromY);
         
@@ -125,13 +147,35 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, project
         // Draw arrow head
         const headlen = 20;
         const angle = Math.atan2(toY - controlY, toX - controlX);
-        ctx.fillStyle = '#2C3E50';
+        ctx.fillStyle = isSelected ? '#FF6B9D' : (conn.fromButtonId ? '#667eea' : '#2C3E50');
         ctx.beginPath();
         ctx.moveTo(toX, toY);
         ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
         ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
         ctx.closePath();
         ctx.fill();
+        
+        // Draw label (button name) on the line if it exists
+        if (conn.label) {
+          const midX = fromX + (dx / 2);
+          const midY = fromY + (dy / 2);
+          
+          ctx.font = `bold ${12 / zoom}px Arial`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          // Draw white background for label
+          ctx.fillStyle = isSelected ? '#FFF0F5' : 'white';
+          ctx.strokeStyle = isSelected ? '#FF6B9D' : '#ddd';
+          ctx.lineWidth = 1 / zoom;
+          const textWidth = ctx.measureText(conn.label).width;
+          ctx.fillRect(midX - textWidth / 2 - 4, midY - 8 / zoom, textWidth + 8, 16 / zoom);
+          ctx.strokeRect(midX - textWidth / 2 - 4, midY - 8 / zoom, textWidth + 8, 16 / zoom);
+          
+          // Draw label text
+          ctx.fillStyle = conn.fromButtonId ? '#667eea' : '#2C3E50';
+          ctx.fillText(conn.label, midX, midY);
+        }
       }
     });
 
@@ -268,6 +312,16 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, project
         ctx.fillText(word, block.x + block.width / 2, y, block.width - 10);
         y += 14;
       });
+
+      // For button_container, show button count
+      if (block.type === 'button_container') {
+        ctx.fillStyle = '#FF6B9D';
+        ctx.font = 'bold 11px Arial';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        const btnCount = block.buttons?.length || 0;
+        ctx.fillText(`${btnCount} кнопок`, block.x + block.width - 5, block.y + block.height - 3);
+      }
     });
 
     ctx.restore();
@@ -284,19 +338,102 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, project
   };
 
   const getBlockAtPoint = (x: number, y: number): string | null => {
+    // Обратный порядок чтобы клики попадали на верхние блоки первыми
+    let closestBlock: string | null = null;
+    let closestDistance = Infinity;
+    const margin = 15 / zoom;  // Небольшой margin для удобства, но без конфликтов
+    
     for (let i = blocks.length - 1; i >= 0; i--) {
       const block = blocks[i];
-      const margin = 10 / zoom;
-      if (x >= block.x - margin && x <= block.x + block.width + margin && y >= block.y - margin && y <= block.y + block.height + margin) {
-        return block.id;
+      // Проверяем если точка в пределах блока или рядом
+      if (x >= block.x - margin && x <= block.x + block.width + margin && 
+          y >= block.y - margin && y <= block.y + block.height + margin) {
+        // Вычисляем расстояние до центра блока
+        const blockCenterX = block.x + block.width / 2;
+        const blockCenterY = block.y + block.height / 2;
+        const distance = Math.sqrt(
+          Math.pow(x - blockCenterX, 2) + Math.pow(y - blockCenterY, 2)
+        );
+        
+        // Выбираем БЛИЖАЙШИЙ блок, чтобы избежать конфликтов
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestBlock = block.id;
+        }
       }
     }
+    
+    return closestBlock;
+  };
+
+  // Определить если кликнули на соединение (линию)
+  const getConnectionAtPoint = (x: number, y: number): string | null => {
+    const lineThickness = 15 / zoom;  // Зона клика на линию
+    
+    for (const conn of connections) {
+      let fromX, fromY;
+      
+      if (conn.fromButtonId) {
+        const containerBlock = blocks.find(b => b.id === conn.fromBlockId);
+        if (containerBlock) {
+          fromX = containerBlock.x + containerBlock.width / 2;
+          fromY = containerBlock.y + containerBlock.height - 10;
+        }
+      } else {
+        const fromBlock = blocks.find(b => b.id === conn.fromBlockId);
+        if (fromBlock) {
+          fromX = fromBlock.x + fromBlock.width / 2;
+          fromY = fromBlock.y + fromBlock.height / 2;
+        }
+      }
+      
+      const toBlock = blocks.find(b => b.id === conn.toBlockId);
+      
+      if (fromX !== undefined && fromY !== undefined && toBlock) {
+        const toX = toBlock.x + toBlock.width / 2;
+        const toY = toBlock.y + toBlock.height / 2;
+        
+        // Проверить расстояние до квадратной кривой
+        // Упрощенная проверка - проверяем область вокруг кривой
+        const dx = toX - fromX;
+        const dy = toY - fromY;
+        
+        for (let t = 0; t <= 1; t += 0.05) {
+          const controlX = fromX + dx / 2;
+          const controlY = fromY + (dy > 0 ? 100 : -100);
+          
+          const pointX = Math.pow(1 - t, 2) * fromX + 2 * (1 - t) * t * controlX + Math.pow(t, 2) * toX;
+          const pointY = Math.pow(1 - t, 2) * fromY + 2 * (1 - t) * t * controlY + Math.pow(t, 2) * toY;
+          
+          const dist = Math.sqrt(Math.pow(x - pointX, 2) + Math.pow(y - pointY, 2));
+          if (dist < lineThickness) {
+            return conn.id;
+          }
+        }
+      }
+    }
+    
     return null;
   };
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const { x, y } = screenToCanvas(e.clientX, e.clientY);
+    
+    // Right-click: delete selected connection
+    if (e.button === 2) {
+      const connectionId = getConnectionAtPoint(x, y);
+      if (connectionId) {
+        setConnections(connections.filter(c => c.id !== connectionId));
+        setSelectedConnectionId(null);
+        console.log('[CANVAS] Connection deleted:', connectionId);
+      }
+      e.preventDefault();
+      return;
+    }
+    
+    // Left-click
     const blockId = getBlockAtPoint(x, y);
+    const connectionId = getConnectionAtPoint(x, y);
 
     if (connectMode && connectFromId) {
       let targetBlockId = blockId;
@@ -322,11 +459,17 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, project
       
       if (targetBlockId && targetBlockId !== connectFromId) {
         // Create connection
+        const buttonLabel = selectedButtonId && selectedBlock?.type === 'button_container'
+          ? selectedBlock.buttons?.find(b => b.id === selectedButtonId)?.label || ''
+          : '';
+        
         if (!connections.some(c => c.fromBlockId === connectFromId && c.toBlockId === targetBlockId)) {
           const newConnection: Connection = {
             id: `conn-${Date.now()}`,
             fromBlockId: connectFromId,
-            toBlockId: targetBlockId
+            toBlockId: targetBlockId,
+            label: buttonLabel,  // Текст кнопки
+            fromButtonId: selectedButtonId || undefined  // ID кнопки если соединение от кнопки
           };
           setConnections([...connections, newConnection]);
           console.log('[CANVAS] Connection created:', newConnection);
@@ -334,8 +477,16 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, project
       }
       setConnectMode(false);
       setConnectFromId(null);
+      setSelectedButtonId(null);
     } else {
-      setSelectedBlockId(blockId);
+      // Select block or connection
+      if (connectionId) {
+        setSelectedConnectionId(connectionId);
+        setSelectedBlockId(null);
+      } else {
+        setSelectedBlockId(blockId);
+        setSelectedConnectionId(null);
+      }
     }
   };
 
@@ -519,18 +670,58 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, project
 
         {selectedBlockId && (
           <>
+            {/* Для button_container блоков - выбор кнопки перед соединением */}
+            {selectedBlock?.type === 'button_container' && connectMode && !selectedButtonId && (
+              <div style={{ marginRight: '10px', marginLeft: '10px', padding: '8px', background: '#FFF9C4', borderRadius: '4px', maxWidth: '300px' }}>
+                <strong style={{ fontSize: '12px', display: 'block', marginBottom: '5px' }}>🔘 Выберите кнопку для соединения:</strong>
+                {(selectedBlock.buttons || []).map((btn) => (
+                  <button
+                    key={btn.id}
+                    onClick={() => {
+                      setSelectedButtonId(btn.id);
+                      setConnectFromId(selectedBlockId);  // ИСПРАВКА: connectFromId - это ID блока, не кнопки!
+                    }}
+                    className="btn btn-sm"
+                    style={{ 
+                      background: '#667eea', 
+                      color: 'white', 
+                      padding: '4px 8px', 
+                      marginRight: '5px',
+                      marginBottom: '5px',
+                      fontSize: '11px'
+                    }}
+                    title={`Рисовать соединение от кнопки: ${btn.label}`}
+                  >
+                    → {btn.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {/* Если выбрана кнопка - показать статус */}
+            {selectedButtonId && connectMode && (
+              <span style={{ marginLeft: '10px', color: '#00AA00', fontWeight: 'bold', fontSize: '12px' }}>
+                ✓ Кнопка "{selectedBlock?.buttons?.find(b => b.id === selectedButtonId)?.label}" активна. Выберите блок...
+              </span>
+            )}
+            
             <button
               onClick={() => {
-                if (connectMode && connectFromId === selectedBlockId) {
+                if (selectedBlock?.type === 'button_container' && !selectedButtonId) {
+                  // Для button_container - нужно сначала выбрать кнопку
+                  setConnectMode(!connectMode);
+                } else if (connectMode && connectFromId === selectedBlockId) {
                   setConnectMode(false);
                   setConnectFromId(null);
+                  setSelectedButtonId(null);
                 } else {
                   setConnectMode(true);
                   setConnectFromId(selectedBlockId);
+                  setSelectedButtonId(null);
                 }
               }}
-              className={`btn btn-sm ${connectMode && connectFromId === selectedBlockId ? 'btn-active' : ''}`}
-              title="Режим соединения - проложить путь сценария"
+              className={`btn btn-sm ${connectMode && (connectFromId === selectedBlockId || selectedButtonId) ? 'btn-active' : ''}`}
+              title={selectedBlock?.type === 'button_container' ? "Режим соединения - выберите кнопку" : "Режим соединения - проложить путь сценария"}
             >
               🔗 Соединить
             </button>
@@ -557,7 +748,28 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, project
                 title="Редактировать ответ бота"
               />
             )}
-            {selectedBlock.type !== 'message' && (
+            {selectedBlock.type === 'button_container' && (
+              <div style={{ marginRight: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 'bold' }}>🔘 Кнопки: {selectedBlock.buttons?.length || 0}</span>
+                <button
+                  onClick={() => {
+                    const newButton = {
+                      id: `btn-${Date.now()}`,
+                      label: `Кнопка ${(selectedBlock.buttons?.length || 0) + 1}`
+                    };
+                    updateSelectedBlock({
+                      buttons: [...(selectedBlock.buttons || []), newButton]
+                    });
+                  }}
+                  className="btn btn-sm"
+                  style={{ background: '#4CAF50', color: 'white', padding: '4px 8px' }}
+                  title="Добавить новую кнопку"
+                >
+                  ➕ Добавить
+                </button>
+              </div>
+            )}
+            {selectedBlock.type !== 'message' && selectedBlock.type !== 'button_container' && (
               <input
                 type="text"
                 value={selectedBlock.label}
@@ -578,10 +790,69 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, project
               className="color-picker"
               title="Выбрать цвет блока"
             />
+            
+            {/* Размер блока */}
+            <div style={{ display: 'flex', gap: '5px', alignItems: 'center', marginRight: '10px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Размер:</label>
+              <input
+                type="number"
+                min="60"
+                max="400"
+                value={selectedBlock.width}
+                onChange={e => updateSelectedBlock({ width: parseInt(e.target.value) || BLOCK_WIDTH })}
+                placeholder="Ширина"
+                style={{ width: '60px', padding: '4px', fontSize: '12px' }}
+                title="Ширина блока"
+              />
+              <span style={{ fontSize: '12px' }}>×</span>
+              <input
+                type="number"
+                min="40"
+                max="300"
+                value={selectedBlock.height}
+                onChange={e => updateSelectedBlock({ height: parseInt(e.target.value) || BLOCK_HEIGHT })}
+                placeholder="Высота"
+                style={{ width: '60px', padding: '4px', fontSize: '12px' }}
+                title="Высота блока"
+              />
+            </div>
+            
             <button onClick={deleteSelectedBlock} className="btn btn-sm" style={{ background: '#FFB6C1' }} title="Удалить блок">
               🗑️ Удалить
             </button>
           </>
+        )}
+
+        {selectedBlock?.type === 'button_container' && selectedBlock.buttons && selectedBlock.buttons.length > 0 && (
+          <div style={{ marginLeft: '10px', marginRight: '10px', padding: '8px', background: '#FFF9C4', borderRadius: '4px', maxWidth: '400px' }}>
+            <strong style={{ fontSize: '12px' }}>📋 Кнопки контейнера:</strong>
+            {selectedBlock.buttons.map((btn, idx) => (
+              <div key={btn.id} style={{ display: 'flex', gap: '5px', marginTop: '5px', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  value={btn.label}
+                  onChange={e => {
+                    const updated = [...selectedBlock.buttons!];
+                    updated[idx].label = e.target.value;
+                    updateSelectedBlock({ buttons: updated });
+                  }}
+                  placeholder="Текст кнопки"
+                  style={{ flex: 1, padding: '4px 6px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}
+                />
+                <button
+                  onClick={() => {
+                    const updated = selectedBlock.buttons!.filter((_, i) => i !== idx);
+                    updateSelectedBlock({ buttons: updated });
+                  }}
+                  className="btn btn-sm"
+                  style={{ background: '#FF6B6B', color: 'white', padding: '3px 6px', fontSize: '11px' }}
+                  title="Удалить кнопку"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         )}
 
         <div style={{ borderLeft: '1px solid #ddd', margin: '0 10px', height: '30px', marginLeft: 'auto' }}></div>
@@ -606,6 +877,7 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, project
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
+        onContextMenu={(e) => e.preventDefault()}  // Отключить контекстное меню браузера
         className="canvas"
         style={{ cursor: isDragging ? 'grabbing' : connectMode ? 'crosshair' : 'grab' }}
       />
@@ -613,10 +885,22 @@ export const CanvasEditor: React.FC<CanvasEditorProps> = ({ blockSchema, project
       <div className="canvas-info">
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#f5f5f5', borderTop: '1px solid #ddd' }}>
           <div>
-            <strong>Блоков:</strong> {blocks.length} | <strong>Соединений:</strong> {connections.length} | <strong>Выбран:</strong> {selectedBlock?.label || 'Нет'}
+            <strong>Блоков:</strong> {blocks.length} | <strong>Соединений:</strong> {connections.length} | <strong>Выбран:</strong> {selectedConnectionId ? '🔗 Соединение' : (selectedBlock?.label || 'Нет')}
           </div>
-          <div style={{ fontSize: '12px', color: '#666' }}>
-            {connectMode ? '🔗 Режим соединения активен. Нажмите Escape для отмены' : '✌️ Нажмите Ctrl+3 чтобы включить режим соединения'}
+          <div style={{ fontSize: '12px', color: '#666', textAlign: 'right' }}>
+            {selectedConnectionId && (
+              <button 
+                onClick={() => {
+                  setConnections(connections.filter(c => c.id !== selectedConnectionId));
+                  setSelectedConnectionId(null);
+                }}
+                style={{ marginRight: '10px', padding: '4px 8px', background: '#FF6B6B', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}
+                title="Удалить соединение (или щелк правой кнопкой)"
+              >
+                🗑️ Удалить соединение
+              </button>
+            )}
+            {connectMode ? '🔗 Режим соединения активен. Нажмите Escape для отмены' : '✌️ Правый клик на линии чтобы удалить'}
           </div>
         </div>
       </div>

@@ -65,6 +65,7 @@
   display: flex;
   gap: 12px;
   animation: slideIn 0.3s ease;
+  align-items: center;
 }
 
 @keyframes slideIn {
@@ -78,12 +79,18 @@
   }
 }
 
+/* Сообщения ПОЛЬЗОВАТЕЛЯ - справа */
 .message.user {
   justify-content: flex-end;
+  flex-direction: row-reverse;
+  align-self: flex-end;  /* ВАЖНО: позиционирует сообщение справа */
 }
 
+/* Сообщения БОТА - слева */
 .message.bot {
   justify-content: flex-start;
+  flex-direction: row;
+  align-self: flex-start;  /* ВАЖНО: позиционирует сообщение слева */
 }
 
 .bot-avatar,
@@ -98,14 +105,19 @@
 }
 
 .message-content {
-  max-width: 60%;
+  max-width: 70%;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
+/* Выравнивание контента */
 .message.user .message-content {
   align-items: flex-end;
+}
+
+.message.bot .message-content {
+  align-items: flex-start;
 }
 
 .message-text {
@@ -114,30 +126,41 @@
   border-radius: 12px;
   word-wrap: break-word;
   line-height: 1.5;
+  font-size: 15px;
 }
 
+/* ПОЛЬЗОВАТЕЛЬ - фиолетовый градиент справа */
 .message.user .message-text {
-  background: var(--color-accent-pink);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border-bottom-right-radius: 4px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
+/* БОТ - серый слева */
 .message.bot .message-text {
-  background: var(--color-gray-light);
-  color: var(--color-text);
+  background: #f0f0f0;
+  color: #333;
   border-bottom-left-radius: 4px;
+  border: 1px solid #e0e0e0;
 }
 
 .message-buttons {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.message.user .message-buttons {
+  border-top-color: rgba(255, 255, 255, 0.3);
 }
 
 .message-button {
-  padding: 10px 16px;
-  background: var(--color-primary);
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
   border-radius: 6px;
@@ -147,11 +170,17 @@
   transition: all 0.3s;
   text-align: left;
   white-space: normal;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.25);
 }
 
 .message-button:hover:not(:disabled) {
-  background: var(--color-primary-dark, #4f46e5);
-  transform: translateX(4px);
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.message-button:active:not(:disabled) {
+  transform: translateY(0px);
 }
 
 .message-button:disabled {

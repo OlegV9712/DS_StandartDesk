@@ -184,6 +184,14 @@ class ApiService {
     return this.client.delete(`/blockschemas/${blockSchemaId}`, { params: { userId } });
   }
 
+  buildScenario(blockSchemaId: number, userId: number = 1) {
+    return this.client.post(
+      `/blockschemas/${blockSchemaId}/build`,
+      {},
+      { params: { userId } }
+    );
+  }
+
   // Versions
   getVersionHistory(blockSchemaId: number) {
     return this.client.get<BlockSchemaVersion[]>(`/blockschemas/${blockSchemaId}/versions`);

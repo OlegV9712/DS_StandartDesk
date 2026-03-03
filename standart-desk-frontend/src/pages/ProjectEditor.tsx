@@ -157,6 +157,30 @@ export const ProjectEditor: React.FC = () => {
     }
   };
 
+  const handleBuildScenario = async (): Promise<void> => {
+    if (!blockSchema) {
+      setError('No block schema to build');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      console.log('[EDITOR] Building scenario for schema', blockSchema.id);
+
+      const response = await apiService.buildScenario(blockSchema.id, user?.id);
+      console.log('[EDITOR] Scenario built successfully:', response.data);
+
+      setError(''); // Clear any errors
+      alert(`✅ Scenario built successfully!\n\nNow you can test it in "Test Scenarios" section.`);
+    } catch (err: any) {
+      console.error('[EDITOR] Build error:', err);
+      const errorMsg = err.response?.data?.error || err.message || 'Unknown error';
+      setError('Failed to build scenario: ' + errorMsg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (!id || !user?.id) {
     return (
       <div className="editor-error">
@@ -199,6 +223,16 @@ export const ProjectEditor: React.FC = () => {
           >
             📑 Pages ({pages.length})
           </button>
+          {blockSchema && projectType === 1 && (
+            <button
+              className="build-btn"
+              onClick={handleBuildScenario}
+              disabled={saving}
+              title="Compile scenario for testing"
+            >
+              🔨 Build Scenario
+            </button>
+          )}
           {saving && <span className="saving-indicator">💾 Сохраняется...</span>}
         </div>
       </div>

@@ -223,4 +223,81 @@ public class BlockSchemasController : ControllerBase
         _logger.LogInformation("BlockSchema {BlockSchemaId} reverted to version {VersionId} by user {UserId}", id, dto.VersionId, userId);
         return NoContent();
     }
+
+    [HttpPost("{id}/build")]
+    public async Task<IActionResult> BuildScenario(int id, [FromQuery] int userId = 1)
+    {
+        var schema = await _context.BlockSchemas.FindAsync(id);
+        if (schema == null)
+            return NotFound(new { message = "Block schema not found" });
+
+        // Парсим для валидации
+        try
+        {
+            if (string.IsNullOrEmpty(schema.Content))
+                return BadRequest(new { message = "Invalid scenario JSON structure" });
+
+            var content = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.Dictionary<string, object>>(schema.Content);
+            if (content == null)
+                return BadRequest(new { message = "Invalid scenario JSON structure" });
+
+            _logger.LogInformation($"Building scenario {id} by user {userId}");
+
+            // Сохраняем текущую версию перед обновлением (для undo)
+            const string buildChangeDescription = "Built scenario";
+            await _versioningService.CreateVersionAsync(
+                id, 
+                userId, 
+                schema.Content, 
+                buildChangeDescription
+            );
+
+            // Обновляем UpdatedAt при сборке
+            schema.UpdatedAt = DateTime.UtcNow;
+            _context.BlockSchemas.Update(schema);
+            await _context.SaveChangesAsync();
+
+            // Логируем как audit event
+            await _auditService.LogActionAsync(
+                userId,
+                "BUILD_SCENARIO",
+                "BlockSchema",
+                schema.ProjectId,
+                schema.PageId,
+                id,
+                null,
+                new { message = "Scenario built and ready for testing", buildTime = DateTime.UtcNow },
+                "Scenario compiled for testing"
+            );
+
+            _logger.LogInformation($"BlockSchema {id} successfully compiled by user {userId}");
+
+            return Ok(new
+            {
+                message = "Scenario built successfully",
+                schemaId = id,
+                schemaName = schema.Name,
+                buildTime = DateTime.UtcNow,
+                readyForTesting = true
+            });
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            _logger.LogError($"Failed to build scenario {id}: Invalid JSON - {ex.Message}");
+            return BadRequest(new
+            {
+                message = "Failed to build scenario",
+                error = "Invalid JSON structure: " + ex.Message
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Failed to build scenario {id}: {ex.Message}");
+            return BadRequest(new
+            {
+                message = "Failed to build scenario",
+                error = ex.Message
+            });
+        }
+    }
 }

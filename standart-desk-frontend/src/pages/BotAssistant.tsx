@@ -160,7 +160,9 @@ export const BotAssistant: React.FC = () => {
   const handleButtonClick = async (button: { id: string; title: string; payload: string }) => {
     if (!sessionId || isProcessing || isSessionEnded) return;
 
-    // Display user's button click
+    setIsProcessing(true);
+
+    // Добавляем сообщение пользователя и убираем кнопки с последнего бота - все в одном обновлении
     const userMessage: Message = {
       id: Math.random().toString(),
       text: button.title,
@@ -168,11 +170,22 @@ export const BotAssistant: React.FC = () => {
       createdAt: new Date()
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setIsProcessing(true);
+    setMessages((prev) => {
+      // Удаляем кнопки из последнего сообщения бота
+      const messagesWithoutButtons = prev.map((msg, idx) => {
+        if (idx === prev.length - 1 && msg.sender === 'bot') {
+          const msgCopy = { ...msg };
+          msgCopy.buttons = undefined;
+          return msgCopy;
+        }
+        return msg;
+      });
+      // Добавляем пользовательское сообщение
+      return [...messagesWithoutButtons, userMessage];
+    });
 
     try {
-      // Send button click to server
+      // Отправляем на сервер
       const botResponse = await chatbotApi.sendMessage(sessionId, {
         selectedButtonId: button.id
       });
@@ -181,8 +194,8 @@ export const BotAssistant: React.FC = () => {
         setIsSessionEnded(true);
       }
 
-      // Display bot response
-      const message: Message = {
+      // Добавляем ответ бота
+      const botMessage: Message = {
         id: Math.random().toString(),
         text: botResponse.text,
         sender: 'bot',
@@ -196,12 +209,12 @@ export const BotAssistant: React.FC = () => {
         createdAt: new Date()
       };
 
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => [...prev, botMessage]);
     } catch (err) {
       console.error('Error handling button click:', err);
       const errorMessage: Message = {
         id: Math.random().toString(),
-        text: '❌ Error processing button. Please try again.',
+        text: '❌ Ошибка обработки кнопки. Попробуйте ещё раз.',
         sender: 'bot',
         createdAt: new Date()
       };
