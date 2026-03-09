@@ -64,7 +64,7 @@ export const AdminDashboard: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/stats', {
+      const response = await fetch('/api/admin/stats', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -94,7 +94,7 @@ export const AdminDashboard: React.FC = () => {
   const fetchLogs = async () => {
     try {
       setLogsLoading(true);
-      const response = await fetch('http://localhost:5000/api/admin/logs?page=1&pageSize=100', {
+      const response = await fetch('/api/admin/logs?page=1&pageSize=100', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {

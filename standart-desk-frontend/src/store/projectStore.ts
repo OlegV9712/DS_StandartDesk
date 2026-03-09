@@ -1,6 +1,7 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 import { Project, Page, BlockSchema } from '../types';
-import { apiService } from '../services/api';
+import apiService from '../services/api';
 
 interface ProjectStore {
   projects: Project[];
@@ -11,11 +12,11 @@ interface ProjectStore {
   error: string | null;
 
   // Actions
-  fetchProjects: (userId?: number) => Promise<void>;
+  fetchProjects: () => Promise<void>;
   fetchProject: (projectId: number) => Promise<void>;
-  createProject: (name: string, description?: string, userId?: number) => Promise<Project | null>;
-  updateProject: (projectId: number, name: string, description?: string, userId?: number) => Promise<void>;
-  deleteProject: (projectId: number, userId?: number) => Promise<void>;
+  createProject: (name: string, description?: string, type?: number) => Promise<Project | null>;
+  updateProject: (projectId: number, data: Partial<Project>) => Promise<void>;
+  deleteProject: (projectId: number) => Promise<void>;
   setCurrentProject: (project: Project | null) => void;
   setCurrentPage: (page: Page | null) => void;
   addPage: (page: Page) => void;
@@ -26,140 +27,147 @@ interface ProjectStore {
   setError: (error: string | null) => void;
 }
 
-export const useProjectStore = create<ProjectStore>((set: any) => ({
-  projects: [],
-  currentProject: null,
-  currentPage: null,
-  blockSchemas: [],
-  loading: false,
-  error: null,
+export const useProjectStore = create<ProjectStore>()(
+  devtools(
+    (set) => ({
+      projects: [],
+      currentProject: null,
+      currentPage: null,
+      blockSchemas: [],
+      loading: false,
+      error: null,
 
-  fetchProjects: async (userId = 1) => {
-    set({ loading: true, error: null });
-    try {
-      const response = await apiService.getProjects(userId);
-      set({ projects: response.data, loading: false });
-    } catch (err: any) {
-      set({ 
-        error: err.message || 'Failed to fetch projects',
-        loading: false 
-      });
-    }
-  },
+      fetchProjects: async () => {
+        set({ loading: true, error: null });
+        try {
+          const projects = await apiService.getProjects();
+          set({ projects, loading: false });
+        } catch (err: any) {
+          set({ 
+            error: err.message || 'Failed to fetch projects',
+            loading: false 
+          });
+        }
+      },
 
-  fetchProject: async (projectId: number) => {
-    set({ loading: true, error: null });
-    try {
-      const response = await apiService.getProject(projectId);
-      set({ currentProject: response.data, loading: false });
-    } catch (err: any) {
-      set({ 
-        error: err.message || 'Failed to fetch project',
-        loading: false 
-      });
-    }
-  },
+      fetchProject: async (projectId: number) => {
+        set({ loading: true, error: null });
+        try {
+          const currentProject = await apiService.getProject(projectId);
+          set({ currentProject, loading: false });
+        } catch (err: any) {
+          set({ 
+            error: err.message || 'Failed to fetch project',
+            loading: false 
+          });
+        }
+      },
 
-  createProject: async (name: string, description?: string, userId = 1) => {
-    set({ loading: true, error: null });
-    try {
-      const response = await apiService.createProject(name, description, userId);
-      const newProject = response.data;
-      set((state: any) => ({
-        projects: [...state.projects, newProject],
-        loading: false
-      }));
-      return newProject;
-    } catch (err: any) {
-      set({ 
-        error: err.message || 'Failed to create project',
-        loading: false 
-      });
-      return null;
-    }
-  },
+      createProject: async (name: string, description?: string, type?: number) => {
+        set({ loading: true, error: null });
+        try {
+          const newProject = await apiService.createProject(name, description || '', type || 0);
+          set((state) => ({
+            projects: [...state.projects, newProject],
+            loading: false
+          }));
+          return newProject;
+        } catch (err: any) {
+          set({ 
+            error: err.message || 'Failed to create project',
+            loading: false 
+          });
+          return null;
+        }
+      },
 
-  updateProject: async (projectId: number, name: string, description?: string, userId = 1) => {
-    set({ loading: true, error: null });
-    try {
-      await apiService.updateProject(projectId, name, description, userId);
-      set((state: any) => ({
-        projects: state.projects.map((p: any) => 
-          p.id === projectId ? { ...p, name, description } : p
-        ),
-        currentProject: state.currentProject?.id === projectId 
-          ? { ...state.currentProject, name, description }
-          : state.currentProject,
-        loading: false
-      }));
-    } catch (err: any) {
-      set({ 
-        error: err.message || 'Failed to update project',
-        loading: false 
-      });
-    }
-  },
+      updateProject: async (projectId: number, data: Partial<Project>) => {
+        set({ loading: true, error: null });
+        try {
+          await apiService.updateProject(projectId, data);
+          set((state) => ({
+            projects: state.projects.map((p) => 
+              p.id === projectId ? { ...p, ...data } : p
+            ),
+            currentProject: state.currentProject?.id === projectId 
+              ? { ...state.currentProject, ...data }
+              : state.currentProject,
+            loading: false
+          }));
+          apiService.clearCache(`project-${projectId}`);
+        } catch (err: any) {
+          set({ 
+            error: err.message || 'Failed to update project',
+            loading: false 
+          });
+        }
+      },
 
-  deleteProject: async (projectId: number, userId = 1) => {
-    set({ loading: true, error: null });
-    try {
-      await apiService.deleteProject(projectId, userId);
-      set((state: any) => ({
-        projects: state.projects.filter((p: any) => p.id !== projectId),
-        loading: false
-      }));
-    } catch (err: any) {
-      set({ 
-        error: err.message || 'Failed to delete project',
-        loading: false 
-      });
-    }
-  },
+      deleteProject: async (projectId: number) => {
+        set({ loading: true, error: null });
+        try {
+          await apiService.deleteProject(projectId);
+          set((state) => ({
+            projects: state.projects.filter((p) => p.id !== projectId),
+            currentProject: state.currentProject?.id === projectId ? null : state.currentProject,
+            loading: false
+          }));
+        } catch (err: any) {
+          set({ 
+            error: err.message || 'Failed to delete project',
+            loading: false 
+          });
+        }
+      },
 
-  setCurrentProject: (project: Project | null) => {
-    set({ currentProject: project });
-  },
+      setCurrentProject: (project: Project | null) => {
+        set({ currentProject: project });
+      },
 
-  setCurrentPage: (page: Page | null) => {
-    set({ currentPage: page });
-  },
+      setCurrentPage: (page: Page | null) => {
+        set({ currentPage: page });
+      },
 
-  addPage: (page: Page) => {
-    set((state: any) => ({
-      currentProject: state.currentProject 
-        ? { ...state.currentProject, pages: [...state.currentProject.pages, page] }
-        : null
-    }));
-  },
+      addPage: (page: Page) => {
+        set((state) => ({
+          currentProject: state.currentProject 
+            ? { ...state.currentProject, pages: [...(state.currentProject.pages || []), page] }
+            : null
+        }));
+      },
 
-  removePage: (pageId: number) => {
-    set((state: any) => ({
-      currentProject: state.currentProject
-        ? {
-            ...state.currentProject,
-            pages: state.currentProject.pages.filter((p: any) => p.id !== pageId)
-          }
-        : null
-    }));
-  },
+      removePage: (pageId: number) => {
+        set((state) => ({
+          currentProject: state.currentProject
+            ? {
+                ...state.currentProject,
+                pages: (state.currentProject.pages || []).filter((p) => p.id !== pageId)
+              }
+            : null
+        }));
+      },
 
-  updatePages: (pages: Page[]) => {
-    set((state: any) => ({
-      currentProject: state.currentProject
-        ? { ...state.currentProject, pages }
-        : null
-    }));
-  },
+      updatePages: (pages: Page[]) => {
+        set((state) => ({
+          currentProject: state.currentProject
+            ? { ...state.currentProject, pages }
+            : null
+        }));
+      },
 
-  setBlockSchemas: (schemas: BlockSchema[]) => {
-    set({ blockSchemas: schemas });
-  },
+      setBlockSchemas: (schemas: BlockSchema[]) => {
+        set({ blockSchemas: schemas });
+      },
 
-  setLoading: (loading: boolean) => {
-    set({ loading });
-  },
+      setLoading: (loading: boolean) => {
+        set({ loading });
+      },
 
-  setError: (error: string | null) => {
-    set({ error });
-  }
-}));
+      setError: (error: string | null) => {
+        set({ error });
+      }
+    }),
+    { name: 'ProjectStore', trace: true }
+  )
+);
+

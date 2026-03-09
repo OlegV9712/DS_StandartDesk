@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "analyze": "vite build --mode analyze"
   },
   "dependencies": {
     "@aspnet/signalr": "^1.1.4",
@@ -27,6 +28,7 @@
     "@vitejs/plugin-react": "^4.2.0",
     "eslint": "^8.54.0",
     "eslint-plugin-react": "^7.33.2",
+    "rollup-plugin-visualizer": "^5.10.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.8"
   }

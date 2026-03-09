@@ -52,7 +52,7 @@ export const TaskManager: React.FC = () => {
     const loadTaskDomains = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        const response = await fetch('http://localhost:5000/api/taskdomain/accessible', {
+        const response = await fetch('/api/taskdomain/accessible', {
           headers: {
             'Authorization': token ? `Bearer ${token}` : ''
           }

@@ -3,9 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json.Serialization;
 using StandartDesk.Data;
 using StandartDesk.Models;
 using StandartDesk.Services;
@@ -20,13 +18,20 @@ public class AuthController : ControllerBase
     private readonly ILogger<AuthController> _logger;
     private readonly IAuditService _auditService;
     private readonly IConfiguration _configuration;
+    private readonly ISecurityService _securityService;
 
-    public AuthController(ApplicationDbContext db, ILogger<AuthController> logger, IAuditService auditService, IConfiguration configuration)
+    public AuthController(
+        ApplicationDbContext db,
+        ILogger<AuthController> logger,
+        IAuditService auditService,
+        IConfiguration configuration,
+        ISecurityService securityService)
     {
         _db = db;
         _logger = logger;
         _auditService = auditService;
         _configuration = configuration;
+        _securityService = securityService;
     }
 
     [HttpPost("login")]
@@ -34,31 +39,40 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
-
-            if (user == null || !VerifyPassword(request.Password, user.PasswordHash))
+            // Input validation
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
             {
-                _logger.LogWarning($"Failed login attempt for user: {request.Username}");
+                return BadRequest(new { message = "Username and password are required" });
+            }
+
+            var sanitizedUsername = _securityService.SanitizeInput(request.Username);
+            
+            var user = await _db.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Username == sanitizedUsername);
+
+            if (user == null || !_securityService.VerifyPasswordTimingSafe(request.Password, user.PasswordHash))
+            {
+                _logger.LogWarning("Failed login attempt for user: {Username}", sanitizedUsername);
                 
-                // Log failed attempt
                 await _auditService.LogActionAsync(
                     0,
                     "FAILED_LOGIN",
                     "User",
                     null, null, null,
                     null,
-                    new { username = request.Username },
+                    new { username = sanitizedUsername },
                     "Failed login attempt"
                 );
                 
-                return Unauthorized(new { message = "Invalid username or password" });
+                // Always return the same message to prevent username enumeration
+                return Unauthorized(new { message = "Invalid credentials" });
             }
 
             if (!user.IsActive)
             {
-                _logger.LogWarning($"Login attempt for inactive user: {request.Username}");
+                _logger.LogWarning("Login attempt for inactive user: {Username}", sanitizedUsername);
                 
-                // Log attempt for inactive user
                 await _auditService.LogActionAsync(
                     user.Id,
                     "LOGIN_INACTIVE",
@@ -69,24 +83,26 @@ public class AuthController : ControllerBase
                     "Attempt to login with inactive account"
                 );
                 
-                return Unauthorized(new { message = "User account is inactive" });
+                return Unauthorized(new { message = "Invalid credentials" });
             }
 
+            // Update last login
             user.LastLoginAt = DateTime.UtcNow;
+            _db.Users.Update(user);
             await _db.SaveChangesAsync();
 
-            // Log the action
+            // Log successful login
             await _auditService.LogActionAsync(
                 user.Id,
                 "LOGIN",
                 "User",
                 null, null, null,
                 null,
-                new { username = user.Username, email = user.Email, role = user.Role },
-                "User logged in"
+                new { userId = user.Id, role = user.Role },
+                "User logged in successfully"
             );
 
-            _logger.LogInformation($"User logged in: {user.Username}");
+            _logger.LogInformation("User logged in successfully: {Username}", user.Username);
 
             return Ok(new LoginResponse
             {
@@ -100,7 +116,7 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Login error: {ex.Message}");
+            _logger.LogError(ex, "Login error");
             return StatusCode(500, new { message = "An error occurred during login" });
         }
     }
@@ -110,22 +126,54 @@ public class AuthController : ControllerBase
     {
         try
         {
-            if (await _db.Users.AnyAsync(u => u.Username == request.Username))
+            // Input validation
+            if (string.IsNullOrWhiteSpace(request.Username) ||
+                string.IsNullOrWhiteSpace(request.Email) ||
+                string.IsNullOrWhiteSpace(request.Password))
+            {
+                return BadRequest(new { message = "Username, email, and password are required" });
+            }
+
+            // Validate username format
+            if (!_securityService.ValidateUsername(request.Username))
+            {
+                return BadRequest(new 
+                { 
+                    message = "Username must be 3-50 characters, alphanumeric with underscore/hyphen only" 
+                });
+            }
+
+            // Validate email format
+            if (!_securityService.ValidateEmail(request.Email))
+            {
+                return BadRequest(new { message = "Invalid email format" });
+            }
+
+            // Validate password strength
+            if (!_securityService.ValidatePassword(request.Password, out var errors))
+            {
+                return BadRequest(new { message = "Password does not meet requirements", errors });
+            }
+
+            var sanitizedUsername = _securityService.SanitizeInput(request.Username);
+            var sanitizedEmail = _securityService.SanitizeInput(request.Email);
+
+            if (await _db.Users.AnyAsync(u => u.Username == sanitizedUsername))
             {
                 return BadRequest(new { message = "Username already exists" });
             }
 
-            if (await _db.Users.AnyAsync(u => u.Email == request.Email))
+            if (await _db.Users.AnyAsync(u => u.Email == sanitizedEmail))
             {
                 return BadRequest(new { message = "Email already exists" });
             }
 
             var user = new User
             {
-                Username = request.Username,
-                Email = request.Email,
-                FullName = request.FullName,
-                PasswordHash = HashPassword(request.Password),
+                Username = sanitizedUsername,
+                Email = sanitizedEmail,
+                FullName = _securityService.SanitizeInput(request.FullName ?? ""),
+                PasswordHash = _securityService.HashPassword(request.Password),
                 Role = UserRole.User,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
@@ -134,43 +182,44 @@ public class AuthController : ControllerBase
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
 
-            // Log the action
+            // Log registration
             await _auditService.LogActionAsync(
                 user.Id,
                 "REGISTER",
                 "User",
                 null, null, null,
                 null,
-                new { username = user.Username, email = user.Email, role = user.Role },
+                new { userId = user.Id },
                 "New user registered"
             );
 
-            _logger.LogInformation($"New user registered: {user.Username}");
+            _logger.LogInformation("New user registered: {Username}", user.Username);
 
             return Ok(new { message = "User registered successfully", userId = user.Id });
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Registration error: {ex.Message}");
+            _logger.LogError(ex, "Registration error");
             return StatusCode(500, new { message = "An error occurred during registration" });
         }
     }
 
     [HttpGet("verify")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<IActionResult> VerifyToken()
     {
         try
         {
-            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-            if (string.IsNullOrEmpty(token))
+            // Extract user ID from JWT claims (automatically validated by middleware)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
             {
                 return Unauthorized();
             }
 
-            // In production, validate JWT token properly
-            // For now, we'll just check if it's a valid format
-            var userId = int.Parse(token.Split('-')[0]);
-            var user = await _db.Users.FindAsync(userId);
+            var user = await _db.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null || !user.IsActive)
             {
@@ -182,56 +231,20 @@ public class AuthController : ControllerBase
                 id = user.Id,
                 username = user.Username,
                 email = user.Email,
-                role = user.Role.ToString()
+                role = user.Role.ToString(),
+                isActive = user.IsActive
             });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Token verification error");
             return Unauthorized();
         }
     }
 
-    private string HashPassword(string password)
-    {
-        using (var sha256 = SHA256.Create())
-        {
-            var salt = new byte[16];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(salt);
-            }
-
-            var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 10000, HashAlgorithmName.SHA256);
-            var hash = pbkdf2.GetBytes(20);
-
-            var hashBytes = new byte[36];
-            Array.Copy(salt, 0, hashBytes, 0, 16);
-            Array.Copy(hash, 0, hashBytes, 16, 20);
-
-            return Convert.ToBase64String(hashBytes);
-        }
-    }
-
-    private bool VerifyPassword(string password, string hash)
-    {
-        var hashBytes = Convert.FromBase64String(hash);
-        var salt = new byte[16];
-        Array.Copy(hashBytes, 0, salt, 0, 16);
-
-        var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 10000, HashAlgorithmName.SHA256);
-        var hash2 = pbkdf2.GetBytes(20);
-
-        for (int i = 0; i < 20; i++)
-        {
-            if (hashBytes[i + 16] != hash2[i])
-                return false;
-        }
-        return true;
-    }
-
     private string GenerateToken(User user)
     {
-        var jwtKey = _configuration["Jwt:Key"] ?? "your-secret-key-change-in-production-very-long-secret-key-here";
+        var jwtKey = _configuration["Jwt:Key"];
         var jwtIssuer = _configuration["Jwt:Issuer"] ?? "StandartDesk";
         var jwtAudience = _configuration["Jwt:Audience"] ?? "StandartDeskUsers";
         var jwtExpireDays = int.TryParse(_configuration["Jwt:ExpireDays"], out var days) ? days : 7;
@@ -242,10 +255,8 @@ public class AuthController : ControllerBase
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim("userId", user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.Username),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim("fullName", user.FullName ?? ""),
             new Claim(ClaimTypes.Role, user.Role.ToString()),
         };
 

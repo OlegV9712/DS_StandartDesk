@@ -33,11 +33,11 @@ export const Dashboard: React.FC = () => {
     try {
       setLoading(true);
       const [projectsRes, foldersRes] = await Promise.all([
-        apiService.getProjects(user?.id || 1),
+        apiService.getProjects(),
         apiService.getFolders(user?.id || 1)
       ]);
-      setProjects(projectsRes.data);
-      setFolders(foldersRes.data);
+      setProjects(Array.isArray(projectsRes) ? projectsRes : (projectsRes?.data || []));
+      setFolders(Array.isArray(foldersRes) ? foldersRes : (foldersRes?.data || []));
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Failed to load projects');

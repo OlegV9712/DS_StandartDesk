@@ -1,8 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    visualizer({
+      open: true,
+      gzipSize: true,
+      brotliSize: true,
+    })
+  ],
   server: {
     port: 5173,
     proxy: {
@@ -21,6 +29,28 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: 'terser'
-  }
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['framer-motion', 'react-icons'],
+          'api-vendor': ['axios'],
+          'state-vendor': ['zustand'],
+        },
+      },
+    },
+  },
+  optimize: {
+    esbuild: {
+      logLevel: 'silent',
+    },
+  },
 })
+

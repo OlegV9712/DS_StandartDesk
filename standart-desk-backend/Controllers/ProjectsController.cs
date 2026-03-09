@@ -1,14 +1,17 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StandartDesk.Data;
 using StandartDesk.DTOs;
 using StandartDesk.Models;
 using StandartDesk.Services;
+using System.Security.Claims;
 
 namespace StandartDesk.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ProjectsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -22,32 +25,51 @@ public class ProjectsController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<ProjectDto>>> GetProjects([FromQuery] int userId = 1)
+    private int GetCurrentUserId()
     {
-        var projects = await _context.Projects
-            .Where(p => p.OwnerId == userId && !p.IsArchived)
-            .Include(p => p.Owner)
-            .Include(p => p.Pages.OrderBy(pg => pg.Order))
-            .ToListAsync();
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        return int.TryParse(userIdClaim?.Value, out var userId) ? userId : 0;
+    }
 
-        var result = projects.Select(p => new ProjectDto
+    [HttpGet]
+    public async Task<ActionResult<List<ProjectDto>>> GetProjects([FromQuery] int? userId = null)
+    {
+        try
         {
-            Id = p.Id,
-            Name = p.Name,
-            Description = p.Description,
-            OwnerName = p.Owner?.FullName ?? p.Owner?.Username ?? "Unknown",
-            Type = (int)p.Type,
-            FolderId = p.FolderId,
-            CreatedAt = p.CreatedAt,
-            UpdatedAt = p.UpdatedAt,
-            IsArchived = p.IsArchived,
-            CurrentOpenByUserName = p.CurrentOpenByUserId.HasValue
-                ? _context.Users.FirstOrDefault(u => u.Id == p.CurrentOpenByUserId)?.FullName ?? "Unknown"
-                : null,
-            Pages = p.Pages.Select(pg => new PageDto
+            var currentUserId = GetCurrentUserId();
+            
+            // Users can only see their own projects unless they request their explicit userId
+            var requestedUserId = userId ?? currentUserId;
+            
+            if (requestedUserId != currentUserId)
             {
-                Id = pg.Id,
+                return Forbid("You can only view your own projects");
+            }
+
+            var projects = await _context.Projects
+                .Where(p => p.OwnerId == requestedUserId && !p.IsArchived)
+                .Include(p => p.Owner)
+                .Include(p => p.Pages.OrderBy(pg => pg.Order))
+                .AsNoTracking()
+                .ToListAsync();
+
+            var result = projects.Select(p => new ProjectDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                OwnerName = p.Owner?.FullName ?? p.Owner?.Username ?? "Unknown",
+                Type = (int)p.Type,
+                FolderId = p.FolderId,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                IsArchived = p.IsArchived,
+                CurrentOpenByUserName = p.CurrentOpenByUserId.HasValue
+                    ? _context.Users.AsNoTracking().FirstOrDefault(u => u.Id == p.CurrentOpenByUserId)?.FullName ?? "Unknown"
+                    : null,
+                Pages = p.Pages.Select(pg => new PageDto
+                {
+                    Id = pg.Id,
                 ProjectId = pg.ProjectId,
                 Name = pg.Name,
                 Order = pg.Order,
@@ -56,6 +78,12 @@ public class ProjectsController : ControllerBase
         }).ToList();
 
         return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting projects");
+            return StatusCode(500, new { message = "Error retrieving projects", error = ex.Message });
+        }
     }
 
     [HttpGet("{id}")]

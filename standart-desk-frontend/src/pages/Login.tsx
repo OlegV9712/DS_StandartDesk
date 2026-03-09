@@ -21,8 +21,7 @@ export const Login: React.FC = () => {
 
     try {
       console.log('[LOGIN] Attempting login for:', username);
-      const response = await apiService.login(username, password);
-      const data = response.data;
+      const data = await apiService.login(username, password);
 
       console.log('[LOGIN] Login successful, redirecting to dashboard');
       // Save auth data

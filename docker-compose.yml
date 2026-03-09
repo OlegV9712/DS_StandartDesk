@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: standart-desk-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-standart_desk}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - standart-desk-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Backend API Service
+  backend:
+    build:
+      context: ./standart-desk-backend
+      dockerfile: Dockerfile
+    container_name: standart-desk-api
+    ports:
+      - "${BACKEND_PORT:-5000}:80"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Database__Provider: postgresql
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-standart_desk};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres};
+      Jwt__Key: ${JWT_KEY:-your-256-bit-secret-key-change-in-production-immediately}
+      Jwt__Issuer: ${JWT_ISSUER:-StandartDesk}
+      Jwt__Audience: ${JWT_AUDIENCE:-StandartDeskUsers}
+      Jwt__ExpireDays: ${JWT_EXPIRE_DAYS:-7}
+      AllowedOrigins__0: http://localhost:3000
+      AllowedOrigins__1: https://localhost:3000
+      AllowedOrigins__2: http://localhost:5173
+      AllowedOrigins__3: https://localhost:5173
+      ASPNETCORE_URLS: http://+:80
+      LOG_LEVEL: ${LOG_LEVEL:-Information}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./standart-desk-backend/logs:/app/logs
+    networks:
+      - standart-desk-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    labels:
+      - "com.standartdesk.service=api"
+
+  # Frontend Web Service
+  frontend:
+    build:
+      context: ./standart-desk-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5001}
+    container_name: standart-desk-web
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:5001}
+    depends_on:
+      - backend
+    networks:
+      - standart-desk-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    labels:
+      - "com.standartdesk.service=frontend"
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  standart-desk-network:
+    driver: bridge

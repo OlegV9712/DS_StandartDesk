@@ -37,21 +37,6 @@ public class TaskItem
     public TaskDomain? TaskDomain { get; set; }
     public User? AssignedToUser { get; set; }
     public User? CreatedByUser { get; set; }
-    public ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();
-    public ICollection<Comment> TaskComments { get; set; } = new List<Comment>();
+    public ICollection<Comment> Comments { get; set; } = new List<Comment>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
-}
-
-public class TaskComment
-{
-    public int Id { get; set; }
-    public int TaskId { get; set; }
-    public int UserId { get; set; }
-    public string Content { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? UpdatedAt { get; set; }
-
-    // Navigation
-    public TaskItem? Task { get; set; }
-    public User? User { get; set; }
 }

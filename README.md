@@ -1,60 +1,82 @@
-# 🚀 StandartHelper - Professional Block Diagram Designer with Audit Logging
+# 🚀 StandartDesk - Professional Project Management & Design Platform
 
-A production-ready web application for creating and managing block diagrams with comprehensive audit logging, user management, role-based access control, and professional features.
+> **Production-Ready** with comprehensive security hardening, testing infrastructure, and PostgreSQL support
 
-## ✨ Features
+A modern web application for creating and managing block diagrams with complete audit logging, user management, role-based access control, and enterprise-grade security features.
 
-### 🎨 Advanced Canvas Editor
-- **Full block diagram support**: Processes, decisions, start/end nodes, data elements
-- **Drag-and-drop interface**: Move blocks freely like Visio
-- **Connect blocks**: Create connections between shapes with automatic arrows
-- **Color customization**: Fill blocks with any color
-- **Text editing**: Write and edit text inside blocks
-- **Zoom & Pan**: Navigate large diagrams seamlessly
-- **Grid-based**: Snap to grid for precise positioning
+## 🔒 Security Features (Enterprise-Grade)
 
-### 🔐 Complete Authentication System
-- PBKDF2-SHA256 password hashing with salt
-- Role-based access control (Admin, Manager, User, Guest)
-- Token-based authentication
-- Session persistence with localStorage
-- Beautiful, clean login page
-- Default admin account automatically created
+### ✅ Authentication & Authorization
+- **Pbkdf2-SHA256** password hashing with 50,000 iterations
+- **Timing-safe** password comparison (prevents timing attacks)
+- **JWT-based** token authentication with configurable expiry
+- **Role-based access control** (Admin, Manager, User, Guest)
+- **OAuth2-compatible** token structure
+- **Session management** with automatic logout on 401
 
-### 👥 User Management
-- Create users with role assignment
-- User status management (Active/Inactive)
-- Avatar support
-- User settings & preferences
-- View all users in admin dashboard
-- Delete user accounts
+### ✅ Input Validation & Sanitization
+- **Email validation** with RFC compliance checks
+- **Username validation** (3-50 chars, alphanumeric only)
+- **Password strength requirements** (uppercase, lowercase, digits, special chars)
+- **URL validation** for avatars and resources
+- **Control character removal** to prevent injection attacks
+- **Input length limits** enforced database-wide
 
-### 📊 Comprehensive Audit Logging
-- **All actions tracked**: CREATE, UPDATE, DELETE, LOGIN
-- **Detailed change tracking**: Old values → New values
-- **Searchable logs**: Find audit records easily
-- **Pagination support**: Browse through audit history
-- **Immutable audit trail**: All changes permanently recorded
+### ✅ API Security
+- **Rate Limiting** (AspNetCoreRateLimit)
+  - 100 requests/minute default
+  - 5 login attempts per 15 minutes
+  - 10 registrations per hour
+- **CORS protection** - Whitelist-based origin validation
+- **Security Headers**:
+  - X-Content-Type-Options: nosniff
+  - X-Frame-Options: DENY
+  - Content-Security-Policy headers
+  - Strict-Transport-Security (HSTS)
+  - Referrer-Policy: strict-origin-when-cross-origin
 
-### ⚙️ User Settings
-- **Theme selection**: Dark/Light mode
-- **Avatar upload**: Custom user avatars
-- **Status setting**: Active/Inactive status
-- **Preferences**: Personalized settings
+### ✅ Database Security
+- **Parameterized queries** (Entity Framework Core)
+- **SQL Injection prevention** built-in
+- **Unique constraints** on username and email
+- **Foreign key relationships** with cascading rules
+- **Audit logging** for all modifications
 
-### 📁 Project Management
-- Create projects with descriptions
-- Visual project cards
-- Open and edit projects
-- Delete projects with confirmation
-- Project ownership tracking
+---
 
-### 🛡️ Security & Authorization
-- Authorization checks on all admin endpoints
-- 401 Unauthorized for missing authentication
-- 403 Forbidden for insufficient permissions
-- CORS configured
-- Secure password handling
+## 📊 Comprehensive Testing (26+ Tests)
+
+### Unit Tests - SecurityService
+- ✅ Password hashing & verification
+- ✅ Email/Username validation
+- ✅ Password strength validation
+- ✅ URL and input sanitization
+- ✅ Timing-safe comparison
+
+### Integration Tests - Controllers
+- ✅ Authentication flow (login, register, verify)
+- ✅ Authorization enforcement
+- ✅ User profile management
+- ✅ Error handling & status codes
+- ✅ JWT token validation
+
+### API Tests
+- ✅ Endpoint security
+- ✅ Authorization checks
+- ✅ Data persistence
+- ✅ Rate limit enforcement
+
+```bash
+# Run all tests
+cd standart-desk-tests && dotnet test
+
+# View testing guide
+cat TESTING_GUIDE.md
+```
+
+---
+
+## 🚀 Performance Optimizations
 
 ## 🗄️ Database Architecture
 
@@ -226,6 +248,187 @@ StandartHelper/
 | **Build Tool** | Vite | 5.0 |
 | **Language** | TypeScript | Latest |
 | **State Management** | Zustand | Latest |
+
+---
+
+## 🚀 Performance Optimizations
+
+### Frontend Performance
+- **Code Splitting**: Dashboard, ProjectEditor, TaskManager load on-demand
+- **Lazy Loading**: Components use React.lazy() + Suspense
+- **API Caching**: 5-minute TTL with request deduplication
+- **Bundle Optimization**: 
+  - Vendor chunks: react, axios, zustand separately
+  - Terser minification with dead code elimination
+  - Gzip compression enabled
+- **Memory Optimization**: 
+  - Zustand selectors prevent unnecessary re-renders
+  - Memoization for expensive computations
+  - Debouncing for search and filters
+
+### Backend Performance
+- **Database Indexing**: Indexed on frequently queried columns
+- **Async/Await**: All I/O operations non-blocking
+- **Connection Pooling**: Optimized database connections
+- **Caching Layer**: Planned Redis integration ready
+
+---
+
+## 📦 Deployment
+
+### SQLite to PostgreSQL Migration
+- **Complete migration guide** in [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+- Includes schema setup and configuration steps
+- Production-ready connection strings
+
+### Docker Support
+```bash
+# Build backend image
+docker build -f Dockerfile -t standart-desk-backend .
+
+# Run with PostgreSQL
+docker run -e DATABASE_URL=postgresql://... standart-desk-backend
+```
+
+### Environment Configuration
+```bash
+# Development (.env)
+ASPNETCORE_ENVIRONMENT=Development
+Jwt__Key=dev-key
+
+# Production (.env)
+ASPNETCORE_ENVIRONMENT=Production
+Jwt__Key=secure-key-with-64-chars-minimum
+Database__Provider=postgresql
+```
+
+---
+
+## 📚 Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | Production setup, PostgreSQL migration, Docker |
+| [TESTING_GUIDE.md](./TESTING_GUIDE.md) | Running tests, test coverage, CI/CD setup |
+| [SECURITY_CHECKLIST.md](./SECURITY_CHECKLIST.md) | Security hardening, best practices |
+| [API_ENDPOINTS.md](./API_ENDPOINTS.md) | Complete endpoint documentation |
+
+---
+
+## 🔧 Development Setup
+
+### Prerequisites
+- .NET 9.0 SDK
+- Node.js 18+
+- Docker (optional)
+
+### Backend Development
+```bash
+cd standart-desk-backend
+
+# Restore dependencies
+dotnet restore
+
+# Run migrations (auto on startup)
+dotnet ef database update
+
+# Start development server
+dotnet run
+
+# Build
+dotnet build -c Release
+
+# Run tests
+cd ../standart-desk-tests && dotnet test
+```
+
+### Frontend Development
+```bash
+cd standart-desk-frontend
+
+# Install dependencies
+npm install
+
+# Start dev server (runs on :5173)
+npm run dev
+
+# Build production bundle
+npm run build
+
+# Analyze bundle size
+npm run analyze
+
+# Type checking
+npm run type-check
+```
+
+---
+
+## 🔐 Security Checklist
+
+**Pre-production Verification:**
+- [ ] Update JWT key (minimum 64 characters)
+- [ ] Configure PostgreSQL instead of SQLite
+- [ ] Set HTTPS/SSL certificates
+- [ ] Configure CORS origins to production domains
+- [ ] Enable all security headers in production
+- [ ] Set up log monitoring and alerting
+- [ ] Enable audit logging review process
+- [ ] Configure automated backups
+- [ ] Update default admin credentials
+- [ ] Enable rate limiting
+- [ ] Review and update security policies
+
+---
+
+## 🐛 Troubleshooting
+
+### Backend Issues
+```bash
+# Connection string error
+→ Check appsettings.json Database:Provider setting
+
+# JWT token invalid
+→ Verify JWT:Key is configured (64+ chars)
+
+# CORS error
+→ Add your frontend domain to AllowedOrigins
+
+# Test failures
+→ Ensure in-memory database is used in tests
+```
+
+### Frontend Issues
+```bash
+# API connection refused
+→ Ensure backend is running on localhost:5000
+
+# Components not loading
+→ Check browser console for module loading errors
+
+# Performance issues
+→ Run 'npm run analyze' to check bundle size
+```
+
+---
+
+## 📞 Support & Contributing
+
+For issues, questions, or contributions:
+1. Check documentation files first
+2. Review TESTING_GUIDE.md for test patterns
+3. Consult DEPLOYMENT_GUIDE.md for deployment issues
+
+---
+
+## 📄 License
+
+Proprietary - All rights reserved
+
+---
+
+**Last Updated**: March 2026  
+**Status**: Production-Ready ✅
 | **UI Animations** | Framer Motion | Latest |
 | **HTTP Client** | Fetch API | Native |
 | **Real-time** | SignalR (optional) | Latest |
@@ -314,6 +517,177 @@ newValue (JSON)
 createdAt (datetime)
 ```
 
+## � Docker Deployment (Production-Ready)
+
+### Quick Start with Docker
+
+**One command to run everything:**
+
+```bash
+docker compose up --build
+```
+
+**Access the application:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5000
+- PostgreSQL: localhost:5432
+
+### What's Included
+
+✅ **Backend Container** (ASP.NET Core 9.0)
+- Multi-stage build (optimized & secure)
+- Health checks configured
+- Automatic database migrations
+- Logging to container stdout
+- Environment variable configuration
+
+✅ **Frontend Container** (React + Nginx)
+- Production-optimized build
+- Gzip compression enabled
+- Security headers configured
+- API proxy to backend
+- WebSocket support for SignalR
+- Client-side routing support
+
+✅ **Database Container** (PostgreSQL 16)
+- Persistent volume for data
+- Health checks configured
+- Automatic initialization
+- Backup-ready setup
+
+### Environment Configuration
+
+Create `.env` file (or copy from `.env.example`):
+
+```bash
+# Database
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=standart_desk
+
+# Backend JWT
+JWT_KEY=your-256-bit-secret-key-generate-with-openssl
+JWT_ISSUER=StandartDesk
+JWT_AUDIENCE=StandartDeskUsers
+
+# URLs
+FRONTEND_URL=http://localhost:3000
+VITE_API_URL=http://localhost:5000
+
+# Ports
+BACKEND_PORT=5000
+FRONTEND_PORT=3000
+```
+
+**Generate secure JWT key:**
+```bash
+openssl rand -base64 64
+```
+
+### Makefile Commands
+
+Helpful shortcuts for Docker operations:
+
+```bash
+make help                 # Show all commands
+make build              # Build images
+make up                 # Start services
+make down               # Stop services
+make restart            # Restart services
+make logs               # View all logs
+make logs-backend       # View backend logs only
+make ps                 # Show running containers
+make clean              # Remove containers & volumes
+make shell-backend      # Open shell in backend
+make shell-postgres     # Open postgres prompt
+make test               # Run tests
+make status             # Check service health
+```
+
+### Scaling & Monitoring
+
+**View service status:**
+```bash
+docker compose ps
+```
+
+**Check health endpoints:**
+```bash
+curl http://localhost:5000/health
+curl http://localhost:3000/
+```
+
+**View logs:**
+```bash
+docker compose logs -f backend      # Backend logs
+docker compose logs -f frontend     # Frontend logs
+docker compose logs -f postgres     # Database logs
+```
+
+**One-command reset:**
+```bash
+docker compose down -v && docker compose up --build
+```
+
+### Production Deployment
+
+For production deployment:
+
+1. **Generate secure JWT key:**
+   ```bash
+   openssl rand -base64 64
+   ```
+
+2. **Update .env with production values:**
+   ```env
+   JWT_KEY=<generated-key>
+   POSTGRES_PASSWORD=<strong-password>
+   FRONTEND_URL=https://yourdomain.com
+   VITE_API_URL=https://api.yourdomain.com
+   ```
+
+3. **Enable HTTPS:**
+   - Use reverse proxy (nginx, traefik)
+   - Or use AWS ALB, Azure Load Balancer
+   - SSL/TLS termination recommended
+
+4. **Database backup:**
+   ```bash
+   docker compose exec postgres pg_dump -U postgres standart_desk > backup.sql
+   ```
+
+5. **Restore from backup:**
+   ```bash
+   docker compose exec -T postgres psql -U postgres standart_desk < backup.sql
+   ```
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  Docker Network                      │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  ┌──────────────┐         ┌──────────────┐         │
+│  │  Frontend    │         │   Backend    │         │
+│  │  (Nginx)     │◄────────┤  (ASP.NET)   │         │
+│  │  :3000       │  API    │  :80         │         │
+│  └──────────────┘  Proxy  └──────────────┘         │
+│        │                          │                 │
+│        └──────────────┬───────────┘                 │
+│                       │                             │
+│                ┌──────▼────────┐                    │
+│                │  PostgreSQL   │                    │
+│                │  Database     │                    │
+│                │  :5432        │                    │
+│                └───────────────┘                    │
+│                 (Persistent Vol)                    │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
 ## 🚀 Deployment Ready
 
 - ✅ Production-ready code
@@ -326,6 +700,8 @@ createdAt (datetime)
 - ✅ Responsive design
 - ✅ Clean UI/UX
 - ✅ Full audit trail
+- ✅ Docker containerization
+- ✅ One-command deployment
 
 ## 📝 Notes
 

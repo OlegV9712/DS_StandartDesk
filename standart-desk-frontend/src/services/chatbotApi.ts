@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = '/api';
 
 // Create axios instance with proper CORS config
 const axiosInstance = axios.create({

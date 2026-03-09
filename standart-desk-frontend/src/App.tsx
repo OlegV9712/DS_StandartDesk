@@ -1,17 +1,26 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './store/authStore';
 import { Login } from './pages/Login';
-import { Dashboard } from './pages/Dashboard';
-import { ProjectEditor } from './pages/ProjectEditor';
-import { TaskManager } from './pages/TaskManager';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { Settings } from './pages/Settings';
-import { ScenarioTester } from './pages/ScenarioTester';
 import { Layout } from './components/Layout';
 import { MaintenanceWrapper } from './components/MaintenanceWrapper';
-import SMSAdmin from './pages/SMSAdmin';
 import './styles/globals.css';
+
+// Lazy load heavy components for code splitting
+const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const ProjectEditor = lazy(() => import('./pages/ProjectEditor').then(m => ({ default: m.ProjectEditor })));
+const TaskManager = lazy(() => import('./pages/TaskManager').then(m => ({ default: m.TaskManager })));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const ScenarioTester = lazy(() => import('./pages/ScenarioTester').then(m => ({ default: m.ScenarioTester })));
+const SMSAdmin = lazy(() => import('./pages/SMSAdmin').then(m => ({ default: m.default })));
+
+// Loading component
+const PageLoader = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+    <div>Loading...</div>
+  </div>
+);
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole?: string }> = ({ 
   children, 
@@ -45,12 +54,14 @@ const App: React.FC = () => {
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
 
-        {/* Protected routes */}
+        {/* Protected routes with lazy loading */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Suspense fallback={<PageLoader />}>
+                <Dashboard />
+              </Suspense>
             </ProtectedRoute>
           }
         />
@@ -59,7 +70,9 @@ const App: React.FC = () => {
           path="/project/:id"
           element={
             <ProtectedRoute>
-              <ProjectEditor />
+              <Suspense fallback={<PageLoader />}>
+                <ProjectEditor />
+              </Suspense>
             </ProtectedRoute>
           }
         />
@@ -68,7 +81,9 @@ const App: React.FC = () => {
           path="/bot"
           element={
             <ProtectedRoute>
-              <ScenarioTester />
+              <Suspense fallback={<PageLoader />}>
+                <ScenarioTester />
+              </Suspense>
             </ProtectedRoute>
           }
         />
@@ -77,7 +92,9 @@ const App: React.FC = () => {
           path="/tasks"
           element={
             <ProtectedRoute>
-              <TaskManager />
+              <Suspense fallback={<PageLoader />}>
+                <TaskManager />
+              </Suspense>
             </ProtectedRoute>
           }
         />
@@ -86,7 +103,9 @@ const App: React.FC = () => {
           path="/admin"
           element={
             <ProtectedRoute requiredRole="Admin">
-              <AdminDashboard />
+              <Suspense fallback={<PageLoader />}>
+                <AdminDashboard />
+              </Suspense>
             </ProtectedRoute>
           }
         />
@@ -95,7 +114,9 @@ const App: React.FC = () => {
           path="/sms"
           element={
             <ProtectedRoute>
-              <SMSAdmin />
+              <Suspense fallback={<PageLoader />}>
+                <SMSAdmin />
+              </Suspense>
             </ProtectedRoute>
           }
         />

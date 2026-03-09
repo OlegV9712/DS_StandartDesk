@@ -17,7 +17,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<BlockSchema> BlockSchemas { get; set; } = null!;
     public DbSet<BlockSchemaVersion> BlockSchemaVersions { get; set; } = null!;
     public DbSet<TaskItem> Tasks { get; set; } = null!;
-    public DbSet<TaskComment> TaskComments { get; set; } = null!;
     public DbSet<Comment> Comments { get; set; } = null!;
     public DbSet<AuditLog> AuditLogs { get; set; } = null!;
     public DbSet<Notification> Notifications { get; set; } = null!;
@@ -147,20 +146,6 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(t => t.CreatedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // TaskComment Configuration
-        modelBuilder.Entity<TaskComment>()
-            .HasKey(tc => tc.Id);
-        modelBuilder.Entity<TaskComment>()
-            .HasOne(tc => tc.Task)
-            .WithMany(t => t.Comments)
-            .HasForeignKey(tc => tc.TaskId)
-            .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<TaskComment>()
-            .HasOne(tc => tc.User)
-            .WithMany()
-            .HasForeignKey(tc => tc.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         // Indexes
         modelBuilder.Entity<AuditLog>()
             .HasIndex(al => al.UserId);
@@ -190,23 +175,6 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Notification>()
             .HasIndex(n => new { n.UserId, n.IsRead, n.CreatedAt })
             .IsDescending(false, true, true);
-
-        // Comment Configuration
-        modelBuilder.Entity<Comment>()
-            .HasKey(c => c.Id);
-        modelBuilder.Entity<Comment>()
-            .HasOne(c => c.Task)
-            .WithMany(t => t.TaskComments)
-            .HasForeignKey(c => c.TaskId)
-            .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<Comment>()
-            .HasOne(c => c.User)
-            .WithMany(u => u.Comments)
-            .HasForeignKey(c => c.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
-        modelBuilder.Entity<Comment>()
-            .HasIndex(c => new { c.TaskId, c.CreatedAt })
-            .IsDescending(false, true);
 
         // ChatSession Configuration
         modelBuilder.Entity<ChatSession>()

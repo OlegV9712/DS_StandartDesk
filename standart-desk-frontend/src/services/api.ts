@@ -1,10 +1,25 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosError } from 'axios';
 import { Project, Page, BlockSchema, AuditLog, BlockSchemaVersion } from '../types';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+// Get API base URL - use relative path for same-origin requests through Nginx proxy
+const getApiBaseUrl = () => {
+  // Use relative path /api instead of absolute URL
+  // This way it goes through Nginx proxy on same domain
+  return '/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+}
 
 class ApiService {
   private client: AxiosInstance;
+  private cache: Map<string, CacheEntry> = new Map();
+  private requestQueue: Map<string, Promise<any>> = new Map();
 
   constructor() {
     this.client = axios.create({
@@ -12,6 +27,7 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json',
       },
+      timeout: 10000,
     });
 
     // Add token to requests
@@ -26,15 +42,75 @@ class ApiService {
     // Handle response errors
     this.client.interceptors.response.use(
       (response) => response,
-      (error) => {
+      (error: AxiosError) => {
         if (error.response?.status === 401) {
           console.warn('[API] Unauthorized - clearing auth');
           localStorage.removeItem('authToken');
           localStorage.removeItem('authUser');
+          // Trigger logout event
+          window.dispatchEvent(new CustomEvent('logout'));
         }
         return Promise.reject(error);
       }
     );
+  }
+
+  /**
+   * Check if cache is still valid
+   */
+  private isCacheValid(cacheKey: string): boolean {
+    const entry = this.cache.get(cacheKey);
+    if (!entry) return false;
+    return Date.now() - entry.timestamp < CACHE_DURATION;
+  }
+
+  /**
+   * Get from cache or execute request
+   */
+  private async getCachedOrFetch<T>(
+    cacheKey: string,
+    fetchFn: () => Promise<T>,
+    useCache: boolean = true
+  ): Promise<T> {
+    // Return cached data if valid
+    if (useCache && this.isCacheValid(cacheKey)) {
+      const entry = this.cache.get(cacheKey);
+      if (entry) return entry.data as T;
+    }
+
+    // Avoid duplicate requests
+    if (this.requestQueue.has(cacheKey)) {
+      return this.requestQueue.get(cacheKey)!;
+    }
+
+    const request = fetchFn()
+      .then((data) => {
+        // Cache the result
+        this.cache.set(cacheKey, {
+          data,
+          timestamp: Date.now(),
+        });
+        this.requestQueue.delete(cacheKey);
+        return data;
+      })
+      .catch((error) => {
+        this.requestQueue.delete(cacheKey);
+        throw error;
+      });
+
+    this.requestQueue.set(cacheKey, request);
+    return request;
+  }
+
+  /**
+   * Clear cache for a specific key or all
+   */
+  public clearCache(key?: string): void {
+    if (key) {
+      this.cache.delete(key);
+    } else {
+      this.cache.clear();
+    }
   }
 
   private getCurrentUserId(): number | null {
@@ -48,334 +124,223 @@ class ApiService {
     }
   }
 
-  // Auth
-  login(username: string, password: string) {
-    console.log('[API] Login attempt:', username);
-    return this.client.post('/auth/login', { username, password });
+  // Auth endpoints
+  async login(username: string, password: string) {
+    const response = await this.client.post('/auth/login', { username, password });
+    return response.data;
   }
 
-  register(username: string, email: string, password: string, fullName?: string) {
-    return this.client.post('/auth/register', { username, email, password, fullName });
-  }
-
-  verifyToken() {
-    return this.client.get('/auth/verify');
-  }
-
-  // Admin - Users
-  getAllUsers() {
-    return this.client.get('/admin/users');
-  }
-
-  createUser(username: string, email: string, password: string, fullName: string, role: number, isActive: boolean) {
-    return this.client.post('/admin/users', {
+  async register(username: string, email: string, password: string, fullName?: string) {
+    const response = await this.client.post('/auth/register', {
       username,
       email,
       password,
       fullName,
-      role,
-      isActive
     });
+    return response.data;
   }
 
-  // Users
-  getUser(userId: number) {
-    return this.client.get(`/users/${userId}`);
-  }
-
-  updateUserSettings(userId: number, fullName: string, avatar: string, status: string) {
-    return this.client.put(`/users/${userId}`, {
-      fullName,
-      avatar,
-      status
-    });
-  }
-
-  // Projects
-  getProjects(userId: number = 1) {
-    return this.client.get<Project[]>('/projects', { params: { userId } });
-  }
-
-  getProject(projectId: number) {
-    return this.client.get<Project>(`/projects/${projectId}`);
-  }
-
-  createProject(name: string, description?: string, type: number = 0, folderId?: number, userId: number = 1) {
-    return this.client.post<Project>('/projects', { name, description, type, folderId }, { params: { userId } });
-  }
-
-  updateProject(projectId: number, name?: string, description?: string, folderId?: number | null, userId: number = 1) {
-    const data: any = {};
-    if (name !== undefined) data.name = name;
-    if (description !== undefined) data.description = description;
-    if (folderId !== undefined) data.folderId = folderId;
-    return this.client.put(`/projects/${projectId}`, data, { params: { userId } });
-  }
-
-  deleteProject(projectId: number, userId: number = 1) {
-    return this.client.delete(`/projects/${projectId}`, { params: { userId } });
-  }
-
-  // Pages
-  getPages(projectId: number) {
-    return this.client.get<Page[]>(`/pages/project/${projectId}`);
-  }
-
-  createPage(projectId: number, name: string, order?: number, userId: number = 1) {
-    return this.client.post<Page>('/pages', { name, order: order || 0 }, { 
-      params: { projectId, userId } 
-    });
-  }
-
-  updatePage(pageId: number, name: string, order: number, userId: number = 1) {
-    return this.client.put(`/pages/${pageId}`, { name, order }, { params: { userId } });
-  }
-
-  deletePage(pageId: number, userId: number = 1) {
-    return this.client.delete(`/pages/${pageId}`, { params: { userId } });
-  }
-
-  reorderPages(projectId: number, pages: { pageId: number; order: number }[], userId: number = 1) {
-    return this.client.post(
-      '/pages/reorder',
-      { pages },
-      { params: { projectId, userId } }
+  async verifyToken() {
+    return this.getCachedOrFetch(
+      'verify-token',
+      () => this.client.get('/auth/verify').then(res => res.data),
+      false // Don't cache token verification
     );
   }
 
-  // BlockSchemas
-  getBlockSchemas(pageId: number) {
-    return this.client.get<BlockSchema[]>(`/blockschemas/page/${pageId}`);
-  }
-
-  getBlockSchema(blockSchemaId: number) {
-    return this.client.get<BlockSchema>(`/blockschemas/${blockSchemaId}`);
-  }
-
-  createBlockSchema(
-    projectId: number,
-    pageId: number,
-    name: string,
-    content: string,
-    userId: number = 1
-  ) {
-    return this.client.post<BlockSchema>(
-      '/blockschemas',
-      { name, pageId, content },
-      { params: { projectId, userId } }
+  // Projects endpoints
+  async getProjects(useCache = true): Promise<Project[]> {
+    const userId = this.getCurrentUserId();
+    return this.getCachedOrFetch(
+      `projects-${userId}`,
+      () => this.client.get(`/projects?userId=${userId}`).then(res => res.data),
+      useCache
     );
   }
 
-  updateBlockSchema(
-    blockSchemaId: number,
-    name: string,
-    content: string,
-    changeDescription?: string,
-    userId: number = 1
-  ) {
-    return this.client.put(
-      `/blockschemas/${blockSchemaId}`,
-      { name, content, changeDescription },
-      { params: { userId } }
+  async getProject(id: number, useCache = true): Promise<Project> {
+    return this.getCachedOrFetch(
+      `project-${id}`,
+      () => this.client.get(`/projects/${id}`).then(res => res.data),
+      useCache
     );
   }
 
-  deleteBlockSchema(blockSchemaId: number, userId: number = 1) {
-    return this.client.delete(`/blockschemas/${blockSchemaId}`, { params: { userId } });
-  }
-
-  buildScenario(blockSchemaId: number, userId: number = 1) {
-    return this.client.post(
-      `/blockschemas/${blockSchemaId}/build`,
-      {},
-      { params: { userId } }
-    );
-  }
-
-  // Versions
-  getVersionHistory(blockSchemaId: number) {
-    return this.client.get<BlockSchemaVersion[]>(`/blockschemas/${blockSchemaId}/versions`);
-  }
-
-  revertToVersion(blockSchemaId: number, versionId: number, reason?: string, userId: number = 1) {
-    return this.client.post(
-      `/blockschemas/${blockSchemaId}/revert`,
-      { versionId, reason },
-      { params: { userId } }
-    );
-  }
-
-  // Audit Logs
-  getAuditLogs(projectId?: number, userId?: number, limit: number = 100) {
-    return this.client.get<AuditLog[]>('/audit', {
-      params: { projectId, userId, limit },
+  async createProject(name: string, description: string, type: number, folderId?: number) {
+    const response = await this.client.post('/projects', {
+      name,
+      description,
+      type,
+      folderId,
     });
+    this.clearCache(`projects-${this.getCurrentUserId()}`);
+    return response.data;
   }
 
-  getProjectAuditLogs(projectId: number, limit: number = 100) {
-    return this.client.get<AuditLog[]>(`/audit/project/${projectId}`, {
-      params: { limit },
+  async updateProject(id: number, data: Partial<Project>) {
+    const response = await this.client.put(`/projects/${id}`, data);
+    this.clearCache(`project-${id}`);
+    this.clearCache(`projects-${this.getCurrentUserId()}`);
+    return response.data;
+  }
+
+  async deleteProject(id: number) {
+    const response = await this.client.delete(`/projects/${id}`);
+    this.clearCache(`project-${id}`);
+    this.clearCache(`projects-${this.getCurrentUserId()}`);
+    return response.data;
+  }
+
+  // Pages endpoints
+  async getPages(projectId: number, useCache = true): Promise<Page[]> {
+    return this.getCachedOrFetch(
+      `pages-${projectId}`,
+      () => this.client.get(`/pages?projectId=${projectId}`).then(res => res.data),
+      useCache
+    );
+  }
+
+  async createPage(projectId: number, name: string, order: number) {
+    const response = await this.client.post('/pages', { projectId, name, order });
+    this.clearCache(`pages-${projectId}`);
+    return response.data;
+  }
+
+  // BlockSchemas endpoints
+  async getBlockSchemas(projectId: number, useCache = true): Promise<BlockSchema[]> {
+    return this.getCachedOrFetch(
+      `blockschemas-${projectId}`,
+      () => this.client.get(`/blockschemas?projectId=${projectId}`).then(res => res.data),
+      useCache
+    );
+  }
+
+  async getBlockSchemaVersions(blockSchemaId: number): Promise<BlockSchemaVersion[]> {
+    return this.getCachedOrFetch(
+      `blockschema-versions-${blockSchemaId}`,
+      () => this.client.get(`/blockschemas/${blockSchemaId}/versions`).then(res => res.data),
+      true
+    );
+  }
+
+  async createBlockSchema(projectId: number, name: string, description: string, data: any) {
+    const response = await this.client.post('/blockschemas', {
+      projectId,
+      name,
+      description,
+      data,
     });
+    this.clearCache(`blockschemas-${projectId}`);
+    return response.data;
   }
 
-  getUserAuditLogs(userId: number, limit: number = 100) {
-    return this.client.get<AuditLog[]>(`/audit/user/${userId}`, {
-      params: { limit },
-    });
+  async saveBlockSchemaVersion(blockSchemaId: number, data: any) {
+    const response = await this.client.post(`/blockschemas/${blockSchemaId}/versions`, { data });
+    this.clearCache(`blockschema-versions-${blockSchemaId}`);
+    return response.data;
   }
 
-  getBlockSchemaHistory(blockSchemaId: number) {
-    return this.client.get<AuditLog[]>(`/audit/blockschema/${blockSchemaId}`);
+  // AuditLogs endpoints
+  async getAuditLogs(entityId?: number, entityType?: string): Promise<AuditLog[]> {
+    return this.client
+      .get('/audit', {
+        params: { entityId, entityType },
+      })
+      .then(res => res.data);
   }
 
-  // Tasks
-  getAllTasks() {
+  // Folders endpoints
+  async getFolders(userId?: number): Promise<any[]> {
+    return this.client
+      .get('/folders', {
+        params: { userId },
+      })
+      .then(res => res.data);
+  }
+
+  async createFolder(name: string, description?: string, ownerId?: number): Promise<any> {
+    return this.client
+      .post('/folders', { name, description, ownerId })
+      .then(res => res.data);
+  }
+
+  async updateFolder(folderId: number, name: string): Promise<any> {
+    return this.client
+      .put(`/folders/${folderId}`, { name })
+      .then(res => res.data);
+  }
+
+  async deleteFolder(folderId: number): Promise<any> {
+    return this.client
+      .delete(`/folders/${folderId}`)
+      .then(res => res.data);
+  }
+
+  // Tasks endpoints
+  async getAllTasks(): Promise<any> {
     return this.client.get('/tasks');
   }
 
-  getProjectTasks(projectId: number) {
-    return this.client.get(`/tasks/project/${projectId}/list`);
+  async createTask(taskData: any): Promise<any> {
+    return this.client.post('/tasks', taskData);
   }
 
-  getTaskBoard(projectId: number) {
-    return this.client.get(`/tasks/project/${projectId}`);
+  async updateTask(taskId: number, updates: any): Promise<any> {
+    return this.client.put(`/tasks/${taskId}`, updates);
   }
 
-  getTask(taskId: number) {
-    return this.client.get(`/tasks/${taskId}`);
+  async deleteTask(taskId: number): Promise<any> {
+    return this.client.delete(`/tasks/${taskId}`);
   }
 
-  createTask(data: {
-    title: string;
-    description?: string | null;
-    priority: number;
-    assignedToUserId?: number | null;
-    dueDate?: string | null;
-    status?: number;
-    taskDomainId?: number | null;
-  }) {
-    const userId = this.getCurrentUserId();
-    return this.client.post(`/tasks`, {
-      ...data,
-    }, { params: { userId } });
+  async reassignTask(taskId: number, newAssigneeId: number): Promise<any> {
+    return this.client.put(`/tasks/${taskId}/reassign`, { assignedToUserId: newAssigneeId });
   }
 
-  updateTask(taskId: number, data: {
-    title?: string;
-    description?: string;
-    status?: number;
-    priority?: number;
-    assignedToUserId?: number | null;
-    dueDate?: string;
-    taskDomainId?: number | null;
-  }) {
-    const userId = this.getCurrentUserId();
-    return this.client.put(`/tasks/${taskId}`, data, { params: { userId } });
+  async changeTaskStatus(taskId: number, newStatus: number): Promise<any> {
+    return this.client.put(`/tasks/${taskId}/status`, { status: newStatus });
   }
 
-  reassignTask(taskId: number, newAssigneeId: number | null) {
-    const userId = this.getCurrentUserId();
-    return this.client.put(`/tasks/${taskId}/assignee`, {}, {
-      params: { newAssigneeId, userId }
-    });
+  // Users endpoints
+  async getAllUsers(): Promise<any> {
+    return this.client.get('/users');
   }
 
-  changeTaskStatus(taskId: number, status: number) {
-    return this.client.put(`/tasks/${taskId}/status`, {}, {
-      params: { status }
-    });
+ // Notifications endpoints
+  async getMyNotifications(unreadOnly: boolean = true): Promise<any> {
+    return this.client.get('/notifications', { params: { unreadOnly } });
   }
 
-  deleteTask(taskId: number) {
-    const userId = this.getCurrentUserId();
-    return this.client.delete(`/tasks/${taskId}`, {
-      params: { userId }
-    });
+  async getUnreadCount(): Promise<any> {
+    return this.client.get('/notifications/unread-count');
   }
 
-  // Comments
-  getTaskComments(taskId: number) {
-    return this.client.get(`/comments/task/${taskId}`);
+  async markNotificationAsRead(notificationId: number): Promise<any> {
+    return this.client.put(`/notifications/${notificationId}/read`);
   }
 
-  createTaskComment(taskId: number, data: { text: string }) {
-    return this.client.post(`/comments/task/${taskId}`, data);
-  }
-
-  deleteTaskComment(commentId: number) {
-    return this.client.delete(`/comments/${commentId}`);
-  }
-
-  // Notifications
-  getMyNotifications(unreadOnly: boolean = false) {
-    return this.client.get('/notifications/my', {
-      params: { unreadOnly }
-    });
-  }
-
-  getUnreadCount() {
-    return this.client.get<number>('/notifications/unread-count');
-  }
-
-  markNotificationAsRead(notificationId: number) {
-    return this.client.put(`/notifications/${notificationId}/read`, {});
-  }
-
-  markAllNotificationsAsRead() {
-    return this.client.put('/notifications/mark-all-read', {});
-  }
-
-  deleteNotification(notificationId: number) {
+  async deleteNotification(notificationId: number): Promise<any> {
     return this.client.delete(`/notifications/${notificationId}`);
   }
 
-  // Folders
-  getFolders(userId: number = 1) {
-    return this.client.get('/folders', { params: { userId } });
+  async markAllNotificationsAsRead(): Promise<any> {
+    return this.client.put('/notifications/mark-all-read');
   }
 
-  getFolder(folderId: number) {
-    return this.client.get(`/folders/${folderId}`);
+  // BlockSchema endpoints
+  async updateBlockSchema(blockSchemaId: number, data: any): Promise<any> {
+    return this.client.put(`/blockschemas/${blockSchemaId}`, data);
   }
 
-  createFolder(name: string, parentFolderId?: number, userId: number = 1) {
-    return this.client.post(
-      '/folders',
-      { name, parentFolderId },
-      { params: { userId } }
-    );
+  async buildScenario(blockSchemaId: number, userId?: number): Promise<any> {
+    return this.client.post(`/blockschemas/${blockSchemaId}/build`, { userId });
   }
 
-  updateFolder(folderId: number, name: string) {
-    return this.client.put(`/folders/${folderId}`, { name });
-  }
-
-  deleteFolder(folderId: number, userId: number = 1) {
-    return this.client.delete(`/folders/${folderId}`, { params: { userId } });
-  }
-
-  moveProjectToFolder(projectId: number, targetFolderId?: number, userId: number = 1) {
-    return this.client.post(
-      '/folders/move',
-      { projectId, targetFolderId },
-      { params: { userId } }
-    );
-  }
-
-  // Export
-  exportTasksToCsv(status?: number) {
-    return this.client.get('/export/tasks/csv', {
-      params: { status },
-      responseType: 'blob'
-    });
-  }
-
-  exportTasksToJson(status?: number) {
-    return this.client.get('/export/tasks/json', {
-      params: { status },
-      responseType: 'blob'
-    });
+  // Settings endpoints
+  async updateUserSettings(userId: number, settings: any): Promise<any> {
+    return this.client.put(`/users/${userId}/settings`, settings);
   }
 }
 
+export default new ApiService();
 export const apiService = new ApiService();

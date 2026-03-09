@@ -34,7 +34,7 @@ export const TaskDomainManagement: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:5000/api/taskdomain', {
+      const response = await fetch('/api/taskdomain', {
         headers: {
           'Authorization': token ? `Bearer ${token}` : ''
         }
@@ -55,7 +55,7 @@ export const TaskDomainManagement: React.FC = () => {
   const fetchAllUsers = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const response = await fetch('/api/admin/users', {
         headers: {
           'Authorization': token ? `Bearer ${token}` : ''
         }
@@ -72,7 +72,7 @@ export const TaskDomainManagement: React.FC = () => {
   const fetchDomainDetail = async (domainId: number) => {
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:5000/api/taskdomain/${domainId}`, {
+      const response = await fetch(`/api/taskdomain/${domainId}`, {
         headers: {
           'Authorization': token ? `Bearer ${token}` : ''
         }
@@ -94,7 +94,7 @@ export const TaskDomainManagement: React.FC = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:5000/api/taskdomain', {
+      const response = await fetch('/api/taskdomain', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ export const TaskDomainManagement: React.FC = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:5000/api/taskdomain/${domainId}`, {
+      const response = await fetch(`/api/taskdomain/${domainId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': token ? `Bearer ${token}` : ''
@@ -161,7 +161,7 @@ export const TaskDomainManagement: React.FC = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:5000/api/taskdomain/${selectedDomain.id}/access`, {
+      const response = await fetch(`/api/taskdomain/${selectedDomain.id}/access`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +197,7 @@ export const TaskDomainManagement: React.FC = () => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:5000/api/taskdomain/${selectedDomain.id}/access/${accessId}`, {
+      const response = await fetch(`/api/taskdomain/${selectedDomain.id}/access/${accessId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': token ? `Bearer ${token}` : ''

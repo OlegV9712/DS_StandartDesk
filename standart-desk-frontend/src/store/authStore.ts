@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 
 export interface AuthUser {
   id: number;
@@ -19,33 +20,66 @@ export interface AuthState {
   login: (user: AuthUser) => void;
   logout: () => void;
   updateUser: (user: Partial<AuthUser>) => void;
+  hydrate: () => void;
 }
 
-export const useAuth = create<AuthState>((set) => ({
-  user: localStorage.getItem('authUser') ? JSON.parse(localStorage.getItem('authUser') || '') : null,
-  isAuthenticated: !!localStorage.getItem('authToken'),
-
-  login: (user: AuthUser) => {
-    localStorage.setItem('authUser', JSON.stringify(user));
-    localStorage.setItem('authToken', user.token);
-    set({
-      user,
-      isAuthenticated: true
-    });
-  },
-
-  logout: () => {
-    localStorage.removeItem('authUser');
-    localStorage.removeItem('authToken');
-    set({
+export const useAuth = create<AuthState>()(
+  devtools(
+    (set) => ({
       user: null,
-      isAuthenticated: false
-    });
-  },
+      isAuthenticated: false,
 
-  updateUser: (userData: Partial<AuthUser>) => {
-    set((state: any) => ({
-      user: state.user ? { ...state.user, ...userData } : null
-    }));
-  }
-}));
+      // Initialize from localStorage
+      hydrate: () => {
+        try {
+          const authUser = localStorage.getItem('authUser');
+          const authToken = localStorage.getItem('authToken');
+          
+          if (authUser && authToken) {
+            const user = JSON.parse(authUser);
+            set({
+              user,
+              isAuthenticated: true
+            });
+          }
+        } catch (error) {
+          console.error('Failed to hydrate auth store:', error);
+        }
+      },
+
+      login: (user: AuthUser) => {
+        localStorage.setItem('authUser', JSON.stringify(user));
+        localStorage.setItem('authToken', user.token);
+        set({
+          user,
+          isAuthenticated: true
+        });
+      },
+
+      logout: () => {
+        localStorage.removeItem('authUser');
+        localStorage.removeItem('authToken');
+        set({
+          user: null,
+          isAuthenticated: false
+        });
+        // Dispatch logout event for cleanup
+        window.dispatchEvent(new CustomEvent('logout'));
+      },
+
+      updateUser: (userData: Partial<AuthUser>) => {
+        set((state) => {
+          if (!state.user) return { user: null };
+          const updatedUser = { ...state.user, ...userData };
+          localStorage.setItem('authUser', JSON.stringify(updatedUser));
+          return { user: updatedUser };
+        });
+      }
+    }),
+    { name: 'AuthStore', trace: true }
+  )
+);
+
+// Initialize auth store on app start
+useAuth.getState().hydrate();
+
