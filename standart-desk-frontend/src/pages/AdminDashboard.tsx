@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../store/authStore';
+import { TaskDomainManagement } from '../components/TaskDomainManagement';
 import '../styles/admin.css';
 
 interface User {
@@ -41,7 +42,7 @@ export const AdminDashboard: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [logsLoading, setLogsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'logs' | 'settings'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'logs' | 'tasks' | 'settings'>('stats');
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [newUser, setNewUser] = useState({ username: '', email: '', password: '', fullName: '', role: 2 });
   const [maintenanceMode, setMaintenanceMode] = useState(localStorage.getItem('maintenanceMode') === 'true');
@@ -162,6 +163,12 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setActiveTab('users')}
         >
           👥 Users
+        </button>
+        <button
+          className={`admin-tab ${activeTab === 'tasks' ? 'active' : ''}`}
+          onClick={() => setActiveTab('tasks')}
+        >
+          📋 Task Domains
         </button>
         <button
           className={`admin-tab ${activeTab === 'logs' ? 'active' : ''}`}
@@ -294,6 +301,17 @@ export const AdminDashboard: React.FC = () => {
                 ))}
               </div>
             )}
+          </motion.div>
+        )}
+
+        {/* Task Domains Tab */}
+        {activeTab === 'tasks' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="admin-tasks"
+          >
+            <TaskDomainManagement />
           </motion.div>
         )}
 

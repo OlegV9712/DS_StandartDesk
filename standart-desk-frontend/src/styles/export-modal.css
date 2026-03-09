@@ -13,9 +13,11 @@
 }
 
 .export-modal {
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--glass-shadow-lg);
   width: 90%;
   max-width: 500px;
   animation: slideUp 0.3s ease;

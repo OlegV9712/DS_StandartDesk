@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Task, User, Notification } from '../types';
+import { Task, User, Notification, TaskDomain } from '../types';
 import { apiService } from '../services/api';
 import { TaskBoard } from '../components/TaskBoard';
+import { DomainPicker } from '../components/DomainPicker';
 import { ReassignModal } from '../components/ReassignModal';
 import { CreateTaskModal } from '../components/CreateTaskModal';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { ExportModal } from '../components/ExportModal';
 import { NotificationCenter } from '../components/NotificationCenter';
+import { motion } from 'framer-motion';
 import '../styles/task-manager.css';
 
 interface AuthUser {
@@ -19,6 +21,8 @@ export const TaskManager: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [taskDomains, setTaskDomains] = useState<TaskDomain[]>([]);
+  const [selectedDomainId, setSelectedDomainId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
@@ -41,6 +45,32 @@ export const TaskManager: React.FC = () => {
         console.error('Failed to parse auth user');
       }
     }
+  }, []);
+
+  // Load task domains
+  useEffect(() => {
+    const loadTaskDomains = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch('http://localhost:5000/api/taskdomain/accessible', {
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : ''
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setTaskDomains(data);
+          // Set first domain as selected if any available
+          if (data.length > 0) {
+            setSelectedDomainId(data[0].id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load task domains:', err);
+      }
+    };
+
+    loadTaskDomains();
   }, []);
 
   // Load all tasks
@@ -127,6 +157,7 @@ export const TaskManager: React.FC = () => {
         assignedToUserId: assignedToUserId || null,
         status: 0, // To Do
         priority: priority, // Use passed priority
+        taskDomainId: selectedDomainId || null
       });
 
       // Add new task to the list
@@ -253,18 +284,26 @@ export const TaskManager: React.FC = () => {
     }
   };
 
-  // Filter tasks based on selected filter
+  // Filter tasks based on selected filter and domain
   const getFilteredTasks = () => {
+    let filtered = tasks;
+
+    // Filter by domain
+    if (selectedDomainId) {
+      filtered = filtered.filter(t => t.taskDomainId === selectedDomainId);
+    }
+
+    // Filter by assignment status
     if (filterType === 'all') {
-      return tasks;
+      return filtered;
     } else if (filterType === 'assigned') {
       // Tasks assigned to current user
-      return tasks.filter(t => t.assignedToUserId === currentUser?.id);
+      return filtered.filter(t => t.assignedToUserId === currentUser?.id);
     } else if (filterType === 'unassigned') {
       // Tasks with no assignee
-      return tasks.filter(t => !t.assignedToUserId);
+      return filtered.filter(t => !t.assignedToUserId);
     }
-    return tasks;
+    return filtered;
   };
 
   const filteredTasks = getFilteredTasks();
@@ -317,6 +356,18 @@ export const TaskManager: React.FC = () => {
             onNotificationDelete={handleNotificationDelete}
             onMarkAllAsRead={handleMarkAllAsRead}
           />
+
+          {/* Task Domain Switcher */}
+          {taskDomains.length > 0 && (
+            <div className="task-manager__domain-switcher">
+              <DomainPicker
+                domains={taskDomains}
+                selectedDomainId={selectedDomainId}
+                onSelect={(domainId) => setSelectedDomainId(domainId)}
+                language={language}
+              />
+            </div>
+          )}
         </div>
       </header>
 
@@ -382,6 +433,9 @@ export const TaskManager: React.FC = () => {
         users={users}
         onCreateTask={handleCreateTask}
         onClose={() => setIsCreateTaskModalOpen(false)}
+        taskDomains={taskDomains}
+        selectedDomainId={selectedDomainId}
+        language={language}
       />
 
       {selectedTask && (
@@ -389,9 +443,11 @@ export const TaskManager: React.FC = () => {
           isOpen={isDetailModalOpen}
           task={selectedTask}
           users={users}
+          taskDomains={taskDomains}
           onUpdateTask={handleUpdateTask}
           onDelete={handleDeleteTask}
           onClose={() => setIsDetailModalOpen(false)}
+          language={language}
         />
       )}
 

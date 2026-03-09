@@ -28,4 +28,6 @@ public class User
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     public ICollection<Notification>? SentNotifications { get; set; } = new List<Notification>();
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+    public ICollection<TaskDomain> CreatedTaskDomains { get; set; } = new List<TaskDomain>();
+    public ICollection<TaskDomainAccess> TaskDomainAccess { get; set; } = new List<TaskDomainAccess>();
 }

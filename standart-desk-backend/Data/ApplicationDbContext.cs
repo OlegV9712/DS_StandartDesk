@@ -22,6 +22,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<AuditLog> AuditLogs { get; set; } = null!;
     public DbSet<Notification> Notifications { get; set; } = null!;
     public DbSet<ChatSession> ChatSessions { get; set; } = null!;
+    public DbSet<TaskDomain> TaskDomains { get; set; } = null!;
+    public DbSet<TaskDomainAccess> TaskDomainAccess { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -219,5 +221,43 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<ChatSession>()
             .HasIndex(cs => cs.UserId)
             .IsUnique(false);
+
+        // TaskDomain Configuration
+        modelBuilder.Entity<TaskDomain>()
+            .HasKey(td => td.Id);
+        modelBuilder.Entity<TaskDomain>()
+            .HasOne(td => td.CreatedByUser)
+            .WithMany(u => u.CreatedTaskDomains)
+            .HasForeignKey(td => td.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<TaskDomain>()
+            .HasMany(td => td.Tasks)
+            .WithOne(t => t.TaskDomain)
+            .HasForeignKey(t => t.TaskDomainId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<TaskDomain>()
+            .HasMany(td => td.DomainAccess)
+            .WithOne(da => da.TaskDomain)
+            .HasForeignKey(da => da.TaskDomainId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<TaskDomain>()
+            .HasIndex(td => td.Name)
+            .IsUnique();
+        modelBuilder.Entity<TaskDomain>()
+            .HasIndex(td => td.IsActive);
+
+        // TaskDomainAccess Configuration
+        modelBuilder.Entity<TaskDomainAccess>()
+            .HasKey(tda => tda.Id);
+        modelBuilder.Entity<TaskDomainAccess>()
+            .HasOne(tda => tda.User)
+            .WithMany(u => u.TaskDomainAccess)
+            .HasForeignKey(tda => tda.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<TaskDomainAccess>()
+            .HasIndex(tda => new { tda.TaskDomainId, tda.UserId })
+            .IsUnique();
+        modelBuilder.Entity<TaskDomainAccess>()
+            .HasIndex(tda => tda.UserId);
     }
 }

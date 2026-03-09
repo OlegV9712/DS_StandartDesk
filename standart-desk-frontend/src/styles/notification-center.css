@@ -47,9 +47,11 @@
   top: 100%;
   right: 0;
   margin-top: 8px;
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
-  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--glass-shadow-lg);
   width: 380px;
   max-height: 500px;
   display: flex;

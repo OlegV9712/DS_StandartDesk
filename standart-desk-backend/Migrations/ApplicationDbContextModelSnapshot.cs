@@ -411,6 +411,89 @@ namespace StandartDesk.Migrations
                     b.ToTable("TaskComments");
                 });
 
+            modelBuilder.Entity("StandartDesk.Models.TaskDomain", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Icon")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("TaskDomains");
+                });
+
+            modelBuilder.Entity("StandartDesk.Models.TaskDomainAccess", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("CanDelete")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("CanEdit")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("CanView")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("GrantedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsManager")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TaskDomainId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("TaskDomainId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("TaskDomainAccess");
+                });
+
             modelBuilder.Entity("StandartDesk.Models.TaskItem", b =>
                 {
                     b.Property<int>("Id")
@@ -444,6 +527,9 @@ namespace StandartDesk.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("TaskDomainId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -458,6 +544,8 @@ namespace StandartDesk.Migrations
                     b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("ProjectId");
+
+                    b.HasIndex("TaskDomainId");
 
                     b.ToTable("Tasks");
                 });
@@ -708,6 +796,36 @@ namespace StandartDesk.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("StandartDesk.Models.TaskDomain", b =>
+                {
+                    b.HasOne("StandartDesk.Models.User", "CreatedByUser")
+                        .WithMany("CreatedTaskDomains")
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("StandartDesk.Models.TaskDomainAccess", b =>
+                {
+                    b.HasOne("StandartDesk.Models.TaskDomain", "TaskDomain")
+                        .WithMany("DomainAccess")
+                        .HasForeignKey("TaskDomainId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StandartDesk.Models.User", "User")
+                        .WithMany("TaskDomainAccess")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TaskDomain");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("StandartDesk.Models.TaskItem", b =>
                 {
                     b.HasOne("StandartDesk.Models.User", "AssignedToUser")
@@ -726,11 +844,18 @@ namespace StandartDesk.Migrations
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("StandartDesk.Models.TaskDomain", "TaskDomain")
+                        .WithMany("Tasks")
+                        .HasForeignKey("TaskDomainId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("AssignedToUser");
 
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("Project");
+
+                    b.Navigation("TaskDomain");
                 });
 
             modelBuilder.Entity("StandartDesk.Models.BlockSchema", b =>
@@ -765,6 +890,13 @@ namespace StandartDesk.Migrations
                     b.Navigation("Tasks");
                 });
 
+            modelBuilder.Entity("StandartDesk.Models.TaskDomain", b =>
+                {
+                    b.Navigation("DomainAccess");
+
+                    b.Navigation("Tasks");
+                });
+
             modelBuilder.Entity("StandartDesk.Models.TaskItem", b =>
                 {
                     b.Navigation("Comments");
@@ -780,11 +912,15 @@ namespace StandartDesk.Migrations
 
                     b.Navigation("Comments");
 
+                    b.Navigation("CreatedTaskDomains");
+
                     b.Navigation("Notifications");
 
                     b.Navigation("Projects");
 
                     b.Navigation("SentNotifications");
+
+                    b.Navigation("TaskDomainAccess");
                 });
 #pragma warning restore 612, 618
         }

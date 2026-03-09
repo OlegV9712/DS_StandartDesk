@@ -1,20 +1,24 @@
 /* New Dashboard Container */
 .dashboard-container {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
   display: flex;
   flex-direction: column;
+  backdrop-filter: blur(5px);
 }
 
 .dashboard-header {
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   padding: 30px 40px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--glass-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
+  box-shadow: var(--glass-shadow);
 }
 
 .dashboard-header h1 {
@@ -159,7 +163,9 @@
   display: flex;
   align-items: center;
   padding: 12px;
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border-radius: 6px;
   margin-bottom: 8px;
   cursor: pointer;
@@ -209,7 +215,9 @@
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border-radius: 6px;
   margin-bottom: 8px;
   border: 1px solid #e5e5e5;
@@ -254,7 +262,9 @@
 }
 
 .root-projects-zone {
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border: 2px dashed #d0d0d0;
   border-radius: 8px;
   padding: 20px;
@@ -486,7 +496,9 @@
   gap: var(--spacing-lg);
   padding: var(--spacing-2xl);
   padding-bottom: var(--spacing-lg);
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border-bottom: 1px solid #e0e0e0;
   animation: slideDown 0.5s ease;
   flex-shrink: 0;
@@ -772,7 +784,9 @@
 
 /* Project card */
 .project-card {
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
@@ -933,7 +947,9 @@
 }
 
 .modal {
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 32px;
   max-width: 500px;
@@ -997,7 +1013,9 @@
 .form-input:focus {
   outline: none;
   border-color: #667eea;
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 

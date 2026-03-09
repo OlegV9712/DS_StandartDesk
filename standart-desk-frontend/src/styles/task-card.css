@@ -1,19 +1,21 @@
 .task-card {
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--glass-border);
   padding: 16px;
   margin-bottom: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--transition-base);
   position: relative;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--glass-shadow);
 }
 
 .task-card:hover {
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  border-color: #d1d5db;
+  box-shadow: var(--glass-shadow-lg);
+  border-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-2px);
+  background: var(--glass-bg-light);
 }
 
 /* Status highlighting for due dates */
@@ -168,7 +170,7 @@
 }
 
 .task-card__action-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
   color: white;
   border: none;
   padding: 6px 12px;

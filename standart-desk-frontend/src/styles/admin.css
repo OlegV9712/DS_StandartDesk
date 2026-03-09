@@ -1,8 +1,9 @@
 /* Admin Dashboard */
 .admin-dashboard {
   padding: 32px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
   min-height: 100vh;
+  backdrop-filter: blur(10px);
 }
 
 .admin-header {
@@ -51,10 +52,12 @@
 
 /* Content */
 .admin-content {
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--glass-shadow-lg);
 }
 
 /* Stats Grid */
@@ -70,15 +73,18 @@
 }
 
 .stat-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 24px;
   color: white;
   display: flex;
   gap: 16px;
   align-items: flex-start;
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--glass-shadow);
   transition: transform 0.3s ease;
+  background-image: var(--gradient-primary);
 }
 
 .stat-card:hover {
@@ -110,9 +116,12 @@
 
 /* Recent Activity */
 .recent-activity {
-  background: #f7fafc;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 20px;
+  box-shadow: var(--glass-shadow);
 }
 
 .recent-activity h3 {
@@ -132,9 +141,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px;
-  background: white;
+  background: var(--glass-bg);
   border-radius: 8px;
-  border-left: 3px solid #667eea;
+  border-left: 3px solid var(--color-secondary);
+  transition: all var(--transition-base);
+}
+
+.activity-item:hover {
+  background: var(--glass-bg-light);
 }
 
 .activity-user {
@@ -166,33 +180,35 @@
 
 .btn-primary {
   padding: 10px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-primary);
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all var(--transition-base);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--glass-shadow-lg);
 }
 
 .btn-secondary {
   padding: 10px 20px;
-  background: #e2e8f0;
-  color: #2d3748;
-  border: none;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--color-text);
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all var(--transition-base);
+  backdrop-filter: var(--glass-backdrop);
 }
 
 .btn-secondary:hover {
-  background: #cbd5e0;
+  background: var(--glass-bg-light);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .btn-small {
@@ -255,7 +271,7 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
   color: white;
   border-radius: 50%;
   font-weight: 600;

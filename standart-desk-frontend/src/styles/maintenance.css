@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
   overflow: hidden;
   position: relative;
 }
@@ -191,7 +191,7 @@
   align-items: center;
   min-height: calc(100vh - 100px);
   width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
   padding: 60px 20px;
   box-sizing: border-box;
   overflow: hidden;

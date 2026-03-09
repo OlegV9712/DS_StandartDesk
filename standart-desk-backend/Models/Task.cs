@@ -20,6 +20,7 @@ public class TaskItem
 {
     public int Id { get; set; }
     public int? ProjectId { get; set; } // Nullable for global tasks (not tied to a specific project)
+    public int? TaskDomainId { get; set; } // New field for task domain/area
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public WorkStatus Status { get; set; } = WorkStatus.ToDo;
@@ -33,6 +34,7 @@ public class TaskItem
 
     // Navigation
     public Project? Project { get; set; }
+    public TaskDomain? TaskDomain { get; set; }
     public User? AssignedToUser { get; set; }
     public User? CreatedByUser { get; set; }
     public ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();

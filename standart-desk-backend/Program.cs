@@ -47,10 +47,9 @@ builder.Services.AddSignalR();
 // CORS - Allow frontend access
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", builder =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        builder
-            .SetIsOriginAllowedToAllowWildcardSubdomains()
+        policy
             .WithOrigins(
                 "http://localhost:5173", 
                 "https://localhost:5173",
@@ -59,11 +58,12 @@ builder.Services.AddCors(options =>
                 "http://localhost:3000",
                 "https://localhost:3000",
                 "http://localhost:5000",
-                "http://127.0.0.1:5000"
+                "http://127.0.0.1:5000",
+                "http://localhost:4173",
+                "https://localhost:4173"
             )
             .AllowAnyMethod()
-            .AllowAnyHeader()
-            .Build();
+            .AllowAnyHeader();
     });
 });
 

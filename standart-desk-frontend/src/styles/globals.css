@@ -1,17 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
-/* Light Theme (Default) */
+/* Light Theme (Default) - Liquid Glass */
 :root {
   /* Primary Colors - Modern Blue & Teal */
   --color-primary: #0F172A;
   --color-primary-light: #1E293B;
   --color-primary-lighter: #334155;
-  --color-secondary: #3B82F6;
+  --color-secondary: #667eea;
   --color-secondary-light: #60A5FA;
   --color-secondary-lighter: #93C5FD;
 
   /* Accent Colors - Warm Pink & Purple */
-  --color-accent: #DB2777;
+  --color-accent: #764ba2;
   --color-accent-light: #EC4899;
   --color-accent-lighter: #F472B6;
   --color-accent-dark: #BE185D;
@@ -28,6 +28,20 @@
   --color-bg-white: #FFFFFF;
   --color-bg-overlay: rgba(0, 0, 0, 0.05);
   --color-bg-overlay-dark: rgba(0, 0, 0, 0.1);
+
+  /* Liquid Glass Colors */
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-bg-dark: rgba(255, 255, 255, 0.6);
+  --glass-bg-light: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-backdrop: blur(10px);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --glass-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.3);
+  
+  /* Gradient Colors */
+  --gradient-primary: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
+  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --gradient-light: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
 
   /* Semantic Colors */
   --color-success: #16A34A;
@@ -81,7 +95,32 @@
 body {
   color: var(--color-text);
   transition: color var(--transition-base);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
 }
+
+/* Liquid Glass Mixin */
+.glass-effect {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-effect-dark {
+  background: var(--glass-bg-dark);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-effect-light {
+  background: var(--glass-bg-light);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
 
 /* Dark Theme */
 :root.dark-theme {

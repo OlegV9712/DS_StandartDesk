@@ -49,6 +49,7 @@ public class TaskService : ITaskService
         var taskItem = new TaskItem
         {
             ProjectId = projectId == 0 ? null : projectId, // NULL for global tasks
+            TaskDomainId = dto.TaskDomainId,
             Title = dto.Title,
             Description = dto.Description,
             Priority = (TaskPriority)dto.Priority,
@@ -142,6 +143,9 @@ public class TaskService : ITaskService
 
         if (dto.DueDate.HasValue)
             task.DueDate = dto.DueDate;
+
+        if (dto.TaskDomainId.HasValue)
+            task.TaskDomainId = dto.TaskDomainId;
 
         task.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
@@ -327,6 +331,7 @@ public class TaskService : ITaskService
         {
             Id = task.Id,
             ProjectId = task.ProjectId,
+            TaskDomainId = task.TaskDomainId,
             Title = task.Title,
             Description = task.Description,
             Status = (int)task.Status,

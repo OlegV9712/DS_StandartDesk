@@ -136,6 +136,7 @@ export interface Task {
   assignedToUserId?: number | null;
   assignedToUserName?: string;
   assignedToUserAvatar?: string;
+  taskDomainId?: number | null;
   createdByUserId: number;
   createdByUserName?: string;
   dueDate?: string;
@@ -161,3 +162,48 @@ export interface Notification {
   readAt?: string;
 }
 
+export interface TaskDomain {
+  id: number;
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  createdByUserId: number;
+  createdByUserName?: string;
+  createdAt: string;
+  updatedAt?: string;
+  isActive: boolean;
+  taskCount: number;
+}
+
+export interface TaskDomainDetail extends TaskDomain {
+  accessList: TaskDomainAccess[];
+}
+
+export interface TaskDomainAccess {
+  id: number;
+  userId: number;
+  username?: string;
+  fullName?: string;
+  avatar?: string;
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  isManager: boolean;
+  grantedAt: string;
+}
+
+export interface CreateTaskDomainRequest {
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+}
+
+export interface UpdateTaskDomainAccessRequest {
+  userId: number;
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  isManager: boolean;
+}

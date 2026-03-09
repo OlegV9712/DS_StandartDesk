@@ -252,6 +252,7 @@ class ApiService {
     assignedToUserId?: number | null;
     dueDate?: string | null;
     status?: number;
+    taskDomainId?: number | null;
   }) {
     const userId = this.getCurrentUserId();
     return this.client.post(`/tasks`, {
@@ -266,6 +267,7 @@ class ApiService {
     priority?: number;
     assignedToUserId?: number | null;
     dueDate?: string;
+    taskDomainId?: number | null;
   }) {
     const userId = this.getCurrentUserId();
     return this.client.put(`/tasks/${taskId}`, data, { params: { userId } });

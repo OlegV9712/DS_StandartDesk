@@ -47,16 +47,17 @@
 }
 
 .comment-section__item {
-  background-color: white;
+  background-color: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
   border-radius: 6px;
   padding: 1rem;
-  border-left: 3px solid #4285f4;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border-left: 3px solid var(--color-secondary);
+  box-shadow: var(--glass-shadow);
   transition: all 0.2s ease;
 }
 
 .comment-section__item:hover {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--glass-shadow-lg);
 }
 
 .comment__header {
@@ -142,21 +143,22 @@
 .comment-section__input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #dadce0;
+  border: 1px solid var(--glass-border);
   border-radius: 4px;
   font-family: inherit;
   font-size: 0.9rem;
-  color: #202124;
+  color: var(--color-text);
   resize: vertical;
-  background-color: white;
+  background-color: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
   transition: all 0.2s ease;
 }
 
 .comment-section__input:focus {
   outline: none;
-  border-color: #4285f4;
-  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
-  background-color: #f8f9fa;
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+  background-color: var(--glass-bg-light);
 }
 
 .comment-section__input::placeholder {
@@ -169,14 +171,15 @@
   top: 100%;
   left: 0;
   right: 0;
-  background-color: white;
-  border: 1px solid #dadce0;
+  background-color: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border-top: none;
   border-radius: 0 0 4px 4px;
   max-height: 150px;
   overflow-y: auto;
   z-index: 10;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--glass-shadow);
 }
 
 .comment-section__mention-item {

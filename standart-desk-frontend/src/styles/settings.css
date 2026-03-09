@@ -1,6 +1,6 @@
 .settings-container {
   padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
   min-height: 100vh;
 }
 
@@ -248,7 +248,7 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
   color: white;
 }
 

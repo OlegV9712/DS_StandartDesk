@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Task, User } from '../types';
+import { Task, User, TaskDomain } from '../types';
+import { DomainPicker } from './DomainPicker';
 import { CommentSection } from './CommentSection';
 import '../styles/task-detail-modal.css';
 
@@ -7,11 +8,14 @@ interface TaskDetailModalProps {
   isOpen: boolean;
   task: Task | null;
   users: User[];
+  taskDomains?: TaskDomain[];
+  language?: 'en' | 'ru';
   onUpdateTask: (taskId: number, updates: {
     status?: number;
     priority?: number;
     assignedToUserId?: number | null;
     dueDate?: string;
+    taskDomainId?: number | null;
   }) => void;
   onDelete?: (taskId: number) => void;
   onClose: () => void;
@@ -22,6 +26,13 @@ const STATUS_LABELS: Record<number, string> = {
   1: 'In Progress',
   2: 'In Review',
   3: 'Done',
+};
+
+const STATUS_LABELS_RU: Record<number, string> = {
+  0: 'Новая',
+  1: 'В работе',
+  2: 'На проверке',
+  3: 'Завершена',
 };
 
 const STATUS_COLORS: Record<number, string> = {
@@ -38,6 +49,13 @@ const PRIORITY_LABELS: Record<number, string> = {
   3: 'Urgent',
 };
 
+const PRIORITY_LABELS_RU: Record<number, string> = {
+  0: 'Низкий',
+  1: 'Средний',
+  2: 'Высокий',
+  3: 'Критичный',
+};
+
 const PRIORITY_COLORS: Record<number, string> = {
   0: '#10b981',
   1: '#3b82f6',
@@ -49,6 +67,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   isOpen,
   task,
   users,
+  taskDomains = [],
+  language = 'en',
   onUpdateTask,
   onDelete,
   onClose,
@@ -57,6 +77,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const [priority, setPriority] = useState<number>(1);
   const [assignedToUserId, setAssignedToUserId] = useState<number | null>(null);
   const [dueDate, setDueDate] = useState<string>('');
+  const [taskDomainId, setTaskDomainId] = useState<number | null>(null);
 
   useEffect(() => {
     if (task) {
@@ -64,6 +85,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       setPriority(task.priority || 1);
       setAssignedToUserId(task.assignedToUserId || null);
       setDueDate(task.dueDate ? task.dueDate.split('T')[0] : '');
+      setTaskDomainId(task.taskDomainId || null);
     }
   }, [task]);
 
@@ -89,6 +111,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     onUpdateTask(task.id, { dueDate: newDueDate });
   };
 
+  const handleDomainChange = (newDomainId: number | null) => {
+    setTaskDomainId(newDomainId);
+    if (task) {
+      onUpdateTask(task.id, { taskDomainId: newDomainId });
+    }
+  };
+
   const isOverdue = dueDate && new Date(dueDate).getTime() < new Date().getTime();
   const isDueToday = dueDate && new Date(dueDate).toDateString() === new Date().toDateString();
 
@@ -112,9 +141,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         <div className="task-detail-modal__content">
           {/* Status Section */}
           <section className="task-detail-modal__section">
-            <h3 className="task-detail-modal__section-title">Status</h3>
+            <h3 className="task-detail-modal__section-title">{language === 'ru' ? 'Статус' : 'Status'}</h3>
             <div className="task-detail-modal__status-buttons">
-              {Object.entries(STATUS_LABELS).map(([statusKey, statusLabel]) => (
+              {Object.entries(language === 'ru' ? STATUS_LABELS_RU : STATUS_LABELS).map(([statusKey, statusLabel]) => (
                 <button
                   key={statusKey}
                   className={`task-detail-modal__status-btn ${
@@ -135,9 +164,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
           {/* Priority */}
           <section className="task-detail-modal__section">
-            <h3 className="task-detail-modal__section-title">Priority</h3>
+            <h3 className="task-detail-modal__section-title">{language === 'ru' ? 'Приоритет' : 'Priority'}</h3>
             <div className="task-detail-modal__button-group">
-              {Object.entries(PRIORITY_LABELS).map(([priorityKey, priorityLabel]) => (
+              {Object.entries(language === 'ru' ? PRIORITY_LABELS_RU : PRIORITY_LABELS).map(([priorityKey, priorityLabel]) => (
                 <button
                   key={priorityKey}
                   className="task-detail-modal__status-btn"
@@ -156,14 +185,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           {/* Description */}
           {task.description && (
             <section className="task-detail-modal__section">
-              <h3 className="task-detail-modal__section-title">Description</h3>
+              <h3 className="task-detail-modal__section-title">{language === 'ru' ? 'Описание' : 'Description'}</h3>
               <p className="task-detail-modal__description">{task.description}</p>
             </section>
           )}
 
           {/* Assignee */}
           <section className="task-detail-modal__section">
-            <h3 className="task-detail-modal__section-title">Assigned To</h3>
+            <h3 className="task-detail-modal__section-title">{language === 'ru' ? 'Назначено на' : 'Assigned To'}</h3>
             <select
               className="task-detail-modal__select"
               value={assignedToUserId || ''}
@@ -171,38 +200,50 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 handleAssigneeChange(e.target.value ? parseInt(e.target.value) : null)
               }
             >
-              <option value="">Unassigned</option>
+              <option value="">{language === 'ru' ? 'Не назначена' : 'Unassigned'}</option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.fullName || user.username}
                 </option>
               ))}
             </select>
-            {assignee && <p className="task-detail-modal__assignee-info">Currently: {assignee.fullName || assignee.username}</p>}
+            {assignee && <p className="task-detail-modal__assignee-info">{language === 'ru' ? 'Текущий' : 'Currently'}: {assignee.fullName || assignee.username}</p>}
           </section>
 
           {/* Due Date */}
           <section className="task-detail-modal__section">
-            <h3 className="task-detail-modal__section-title">Due Date</h3>
+            <h3 className="task-detail-modal__section-title">{language === 'ru' ? 'Срок выполнения' : 'Due Date'}</h3>
             <input
               type="date"
               className={`task-detail-modal__input ${isOverdue ? 'overdue' : isDueToday ? 'today' : ''}`}
               value={dueDate}
               onChange={(e) => handleDueDateChange(e.target.value)}
             />
-            {isOverdue && <p className="task-detail-modal__warning">🔴 Overdue!</p>}
-            {isDueToday && <p className="task-detail-modal__warning" style={{ color: '#f59e0b' }}>🟡 Due today!</p>}
+            {isOverdue && <p className="task-detail-modal__warning">🔴 {language === 'ru' ? 'Просрочено!' : 'Overdue!'}</p>}
+            {isDueToday && <p className="task-detail-modal__warning" style={{ color: '#f59e0b' }}>🟡 {language === 'ru' ? 'Срок сегодня!' : 'Due today!'}</p>}
           </section>
+
+          {/* Domain */}
+          {taskDomains.length > 0 && (
+            <section className="task-detail-modal__section">
+              <DomainPicker
+                domains={taskDomains}
+                selectedDomainId={taskDomainId}
+                onSelect={handleDomainChange}
+                language={language}
+              />
+            </section>
+          )}
 
           {/* Metadata */}
           <section className="task-detail-modal__section task-detail-modal__section--compact">
             <div className="task-detail-modal__meta">
               <div>
-                <p className="task-detail-modal__meta-label">Created By</p>
+                <p className="task-detail-modal__meta-label">{language === 'ru' ? 'Создано' : 'Created By'}</p>
                 <p className="task-detail-modal__meta-value">{task.createdByUserName || 'Unknown'}</p>
               </div>
               <div>
-                <p className="task-detail-modal__meta-label">Created At</p>
+                <p className="task-detail-modal__meta-label">{language === 'ru' ? 'Дата создания' : 'Created At'}</p>
                 <p className="task-detail-modal__meta-value">
                   {new Date(task.createdAt).toLocaleDateString()}
                 </p>

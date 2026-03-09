@@ -2,8 +2,9 @@
 
 .sms-admin-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
   padding: 2rem;
+  backdrop-filter: blur(5px);
 }
 
 .sms-admin-header {
@@ -12,9 +13,11 @@
   align-items: flex-start;
   margin-bottom: 2rem;
   padding: 2rem;
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  box-shadow: var(--glass-shadow);
 }
 
 .sms-admin-header h1 {
@@ -32,7 +35,7 @@
 
 .btn-help {
   padding: 10px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -105,7 +108,7 @@
 }
 
 .result-count {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
   color: white;
   padding: 0.25rem 1rem;
   border-radius: 20px;
@@ -304,7 +307,7 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
   color: white;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
@@ -387,7 +390,7 @@
   align-items: center;
   padding: 1.5rem;
   border-bottom: 1px solid #e2e8f0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
   color: white;
 }
 

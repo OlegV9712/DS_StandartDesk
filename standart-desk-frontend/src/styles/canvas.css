@@ -4,10 +4,12 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: white;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--glass-shadow);
 }
 
 .canvas-toolbar {
