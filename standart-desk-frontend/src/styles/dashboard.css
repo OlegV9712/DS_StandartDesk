@@ -74,7 +74,7 @@
 
 .btn-confirm {
   background: #22c55e;
-  color: white;
+  color: var(--color-bg-white);
 }
 
 .btn-confirm:hover {
@@ -85,7 +85,7 @@
 
 .btn-cancel {
   background: #ef4444;
-  color: white;
+  color: var(--color-bg-white);
 }
 
 .btn-cancel:hover {
@@ -139,7 +139,7 @@
 
 .new-folder-input-group button:first-of-type {
   background: #10b981;
-  color: white;
+  color: var(--color-bg-white);
 }
 
 .new-folder-input-group button:first-of-type:hover {
@@ -400,7 +400,7 @@
 .btn-primary {
   padding: 10px 20px;
   background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
-  color: white;
+  color: var(--color-bg-white);
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -534,7 +534,7 @@
 .btn-create {
   padding: var(--spacing-md) var(--spacing-lg);
   background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
-  color: white;
+  color: var(--color-bg-white);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
@@ -568,7 +568,7 @@
 .btn-primary {
   padding: 11px 22px;
   background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
-  color: white;
+  color: var(--color-bg-white);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
@@ -1085,7 +1085,7 @@
 .filter-chip.active {
   background: var(--color-secondary);
   border-color: var(--color-secondary);
-  color: white;
+  color: var(--color-bg-white);
 }
 
 .schemas-grid {

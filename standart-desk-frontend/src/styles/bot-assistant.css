@@ -134,7 +134,7 @@
 /* ПОЛЬЗОВАТЕЛЬ - фиолетовый градиент справа */
 .message.user .message-text {
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-  color: white;
+  color: var(--color-bg-white);
   border-bottom-right-radius: 4px;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
@@ -163,7 +163,7 @@
 .message-button {
   padding: 10px 14px;
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-  color: white;
+  color: var(--color-bg-white);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -236,7 +236,7 @@
 .send-button {
   padding: 12px 20px;
   background: var(--color-primary);
-  color: white;
+  color: var(--color-bg-white);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -270,7 +270,7 @@
   width: 40px;
   height: 40px;
   border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border-top-color: var(--color-bg-white);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

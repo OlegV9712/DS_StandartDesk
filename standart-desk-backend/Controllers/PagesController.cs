@@ -42,6 +42,26 @@ public class PagesController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet]
+    public async Task<ActionResult<List<PageDto>>> GetPages([FromQuery] int projectId)
+    {
+        var pages = await _context.Pages
+            .Where(p => p.ProjectId == projectId)
+            .OrderBy(p => p.Order)
+            .ToListAsync();
+
+        var result = pages.Select(p => new PageDto
+        {
+            Id = p.Id,
+            ProjectId = p.ProjectId,
+            Name = p.Name,
+            Order = p.Order,
+            Thumbnail = p.Thumbnail
+        }).ToList();
+
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<ActionResult<PageDto>> CreatePage([FromBody] CreatePageDto dto, [FromQuery] int projectId, [FromQuery] int userId = 1)
     {

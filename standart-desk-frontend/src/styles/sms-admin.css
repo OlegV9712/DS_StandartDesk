@@ -36,7 +36,7 @@
 .btn-help {
   padding: 10px 20px;
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-  color: white;
+  color: var(--color-bg-white);
   border: none;
   border-radius: 8px;
   font-size: 1rem;
@@ -84,7 +84,7 @@
 
 /* SMS Section */
 .sms-section {
-  background: white;
+  background: var(--modal-bg);
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
@@ -109,7 +109,7 @@
 
 .result-count {
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-  color: white;
+  color: var(--color-bg-white);
   padding: 0.25rem 1rem;
   border-radius: 20px;
   font-size: 0.9rem;
@@ -253,7 +253,7 @@
 }
 
 .result-template {
-  background: white;
+  background: var(--modal-bg);
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   padding: 1rem;
@@ -308,7 +308,7 @@
 
 .btn-primary {
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-  color: white;
+  color: var(--color-bg-white);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
@@ -375,7 +375,7 @@
 }
 
 .help-modal {
-  background: white;
+  background: var(--modal-bg);
   border-radius: 12px;
   max-width: 600px;
   width: 100%;
@@ -391,7 +391,7 @@
   padding: 1.5rem;
   border-bottom: 1px solid #e2e8f0;
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-  color: white;
+  color: var(--color-bg-white);
 }
 
 .modal-header h2 {
@@ -403,7 +403,7 @@
 .close-btn {
   background: none;
   border: none;
-  color: white;
+  color: var(--color-bg-white);
   font-size: 1.5rem;
   cursor: pointer;
   width: 40px;

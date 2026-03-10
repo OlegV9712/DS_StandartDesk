@@ -57,7 +57,8 @@ public class TaskService : ITaskService
             CreatedByUserId = createdByUserId,
             DueDate = dto.DueDate,
             Status = (WorkStatus)dto.Status,
-            DisplayOrder = 0
+            DisplayOrder = 0,
+            CreatedAt = DateTime.UtcNow
         };
 
         _context.Tasks.Add(taskItem);

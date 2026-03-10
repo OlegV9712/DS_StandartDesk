@@ -138,7 +138,7 @@
   padding: 10px;
   background: var(--gradient-primary);
   border: none;
-  color: white;
+  color: var(--color-bg-white);
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;

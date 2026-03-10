@@ -143,12 +143,12 @@
 }
 
 .lang-btn:hover {
-  color: white;
+  color: var(--color-bg-white);
 }
 
 .lang-btn.active {
   background: rgba(255, 255, 255, 0.2);
-  color: white;
+  color: var(--color-bg-white);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
@@ -204,7 +204,7 @@
 
 .filter-btn.active {
   background: var(--gradient-primary);
-  color: white;
+  color: var(--color-bg-white);
   border-color: transparent;
   box-shadow: var(--glass-shadow);
 }
@@ -243,7 +243,7 @@
 }
 
 .domain-selector option {
-  background: white;
+  background: var(--modal-bg);
   color: var(--color-text-dark);
 }
 

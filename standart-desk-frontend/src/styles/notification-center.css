@@ -21,7 +21,7 @@
   top: 0;
   right: 0;
   background: #ef4444;
-  color: white;
+  color: var(--color-bg-white);
   border-radius: 50%;
   width: 20px;
   height: 20px;

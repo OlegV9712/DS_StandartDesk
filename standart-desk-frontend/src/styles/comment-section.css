@@ -203,7 +203,7 @@
 .comment-section__submit-btn {
   padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #4285f4 0%, #1f6feb 100%);
-  color: white;
+  color: var(--color-bg-white);
   border: none;
   border-radius: 4px;
   font-weight: 600;

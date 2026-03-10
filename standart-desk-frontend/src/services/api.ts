@@ -44,11 +44,15 @@ class ApiService {
       (response) => response,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
-          console.warn('[API] Unauthorized - clearing auth');
+          console.warn('[API] Unauthorized - logging out and redirecting to login');
           localStorage.removeItem('authToken');
           localStorage.removeItem('authUser');
           // Trigger logout event
           window.dispatchEvent(new CustomEvent('logout'));
+          // Redirect to login page
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login?session_expired=true';
+          }
         }
         return Promise.reject(error);
       }
@@ -282,7 +286,18 @@ class ApiService {
   }
 
   async createTask(taskData: any): Promise<any> {
-    return this.client.post('/tasks', taskData);
+    // Extract userId from localStorage to pass as query parameter
+    const userStr = localStorage.getItem('authUser');
+    let userId = 1; // Default fallback
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        userId = user.id;
+      } catch (e) {
+        console.warn('Failed to parse auth user for task creation');
+      }
+    }
+    return this.client.post(`/tasks?userId=${userId}`, taskData);
   }
 
   async updateTask(taskId: number, updates: any): Promise<any> {
@@ -337,8 +352,21 @@ class ApiService {
   }
 
   // Settings endpoints
-  async updateUserSettings(userId: number, settings: any): Promise<any> {
-    return this.client.put(`/users/${userId}/settings`, settings);
+  async updateUserSettings(userId: number, fullName: string, avatar: string, status: string): Promise<any> {
+    return this.client.put(`/users/${userId}/settings`, { fullName, avatar, status });
+  }
+
+  // Comments endpoints
+  async getTaskComments(taskId: number): Promise<any> {
+    return this.client.get(`/comments?taskId=${taskId}`);
+  }
+
+  async createTaskComment(taskId: number, data: any): Promise<any> {
+    return this.client.post(`/comments`, { taskId, ...data });
+  }
+
+  async deleteTaskComment(commentId: number): Promise<any> {
+    return this.client.delete(`/comments/${commentId}`);
   }
 }
 

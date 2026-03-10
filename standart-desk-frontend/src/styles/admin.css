@@ -78,7 +78,7 @@
   border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 24px;
-  color: white;
+  color: var(--color-bg-white);
   display: flex;
   gap: 16px;
   align-items: flex-start;
@@ -181,7 +181,7 @@
 .btn-primary {
   padding: 10px 20px;
   background: var(--gradient-primary);
-  color: white;
+  color: var(--color-bg-white);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -233,7 +233,7 @@
 
 /* Table */
 .users-table {
-  background: white;
+  background: var(--modal-bg);
 }
 
 .table-header {
@@ -272,7 +272,7 @@
   width: 32px;
   height: 32px;
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-  color: white;
+  color: var(--color-bg-white);
   border-radius: 50%;
   font-weight: 600;
   margin-right: 8px;
@@ -366,7 +366,7 @@
 }
 
 .modal {
-  background: white;
+  background: var(--modal-bg);
   border-radius: 12px;
   padding: 32px;
   max-width: 500px;
@@ -411,7 +411,7 @@
 
 /* Error */
 .admin-error {
-  background: white;
+  background: var(--modal-bg);
   border-radius: 16px;
   padding: 48px;
   text-align: center;
@@ -587,7 +587,7 @@
 
 /* Admin Settings */
 .admin-settings {
-  background: white;
+  background: var(--modal-bg);
   border-radius: 12px;
   padding: 32px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -611,7 +611,7 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 24px;
-  background: white;
+  background: var(--modal-bg);
   border-radius: 8px;
   margin-bottom: 16px;
   gap: 20px;
@@ -659,7 +659,7 @@
   left: 2px;
   width: 30px;
   height: 30px;
-  background: white;
+  background: var(--modal-bg);
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -701,7 +701,7 @@
   bottom: 20px;
   right: 20px;
   background: #48bb78;
-  color: white;
+  color: var(--color-bg-white);
   padding: 16px 24px;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);

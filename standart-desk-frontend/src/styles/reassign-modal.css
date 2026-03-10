@@ -54,7 +54,7 @@
   border-bottom: 1px solid #e5e7eb;
   position: sticky;
   top: 0;
-  background: white;
+  background: var(--modal-bg);
   border-radius: 16px 16px 0 0;
 }
 
@@ -219,7 +219,7 @@
   justify-content: flex-end;
   position: sticky;
   bottom: 0;
-  background: white;
+  background: var(--modal-bg);
   border-radius: 0 0 16px 16px;
 }
 
@@ -242,7 +242,7 @@
 
 .reassign-modal__btn--primary {
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-  color: white;
+  color: var(--color-bg-white);
 }
 
 .reassign-modal__btn--primary:hover:not(:disabled) {

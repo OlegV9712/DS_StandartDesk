@@ -27,7 +27,7 @@
 /* ===== HEADER ===== */
 .tester-header {
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-  color: white;
+  color: var(--color-bg-white);
   padding: 25px;
   display: flex;
   justify-content: space-between;
@@ -72,7 +72,7 @@
   border: 2px solid rgba(255, 255, 255, 0.5);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.15);
-  color: white;
+  color: var(--color-bg-white);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -81,18 +81,18 @@
 
 .project-select:hover {
   background: rgba(255, 255, 255, 0.25);
-  border-color: white;
+  border-color: var(--color-bg-white);
 }
 
 .project-select option {
   background: #667eea;
-  color: white;
+  color: var(--color-bg-white);
 }
 
 .btn-clear {
   padding: 8px 14px;
   background: rgba(255, 255, 255, 0.25);
-  color: white;
+  color: var(--color-bg-white);
   border: 2px solid rgba(255, 255, 255, 0.5);
   border-radius: 8px;
   cursor: pointer;
@@ -104,7 +104,7 @@
 .btn-clear:hover {
   background: rgba(255, 240, 245, 0.9);
   color: #667eea;
-  border-color: white;
+  border-color: var(--color-bg-white);
 }
 
 .session-ended {
@@ -192,7 +192,7 @@
 }
 
 .message-bubble.bot {
-  background: white;
+  background: var(--modal-bg);
   border: 2px solid #e8ecf7;
   color: #333;
 }
@@ -203,7 +203,7 @@
 
 .message-bubble.user {
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-  color: white;
+  color: var(--color-bg-white);
   border: none;
 }
 
@@ -231,7 +231,7 @@
 .message-button {
   padding: 10px 14px;
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-  color: white;
+  color: var(--color-bg-white);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -260,7 +260,7 @@
 .start-button {
   padding: 14px 32px;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
+  color: var(--color-bg-white);
   border: none;
   border-radius: 10px;
   cursor: pointer;
@@ -289,7 +289,7 @@
 
 /* ===== INPUT SECTION ===== */
 .input-section {
-  background: white;
+  background: var(--modal-bg);
   border-top: 2px solid #e8ecf7;
   padding: 15px 20px;
 }
@@ -314,7 +314,7 @@
 .input-field:focus {
   outline: none;
   border-color: #667eea;
-  background: white;
+  background: var(--modal-bg);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -327,7 +327,7 @@
 .send-button {
   padding: 12px 16px;
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-  color: white;
+  color: var(--color-bg-white);
   border: none;
   border-radius: 12px;
   cursor: pointer;
@@ -362,7 +362,7 @@
 .btn-primary {
   padding: 12px 24px;
   background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-  color: white;
+  color: var(--color-bg-white);
   border: none;
   border-radius: 12px;
   font-size: 14px;
@@ -411,7 +411,7 @@
 }
 
 .loading-container p {
-  color: white;
+  color: var(--color-bg-white);
   font-size: 16px;
   font-weight: 600;
 }
@@ -419,7 +419,7 @@
 /* ===== EMPTY STATE ===== */
 .empty-state {
   text-align: center;
-  color: white;
+  color: var(--color-bg-white);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -509,7 +509,7 @@
 }
 
 .project-card {
-  background: white;
+  background: var(--modal-bg);
   border: 2px solid #e8ecf7;
   border-radius: 16px;
   padding: 30px;
@@ -548,7 +548,7 @@
 .btn-back {
   padding: 8px 14px;
   background: rgba(255, 255, 255, 0.25);
-  color: white;
+  color: var(--color-bg-white);
   border: 2px solid rgba(255, 255, 255, 0.5);
   border-radius: 8px;
   cursor: pointer;
@@ -560,5 +560,5 @@
 .btn-back:hover {
   background: rgba(255, 240, 245, 0.9);
   color: #667eea;
-  border-color: white;
+  border-color: var(--color-bg-white);
 }

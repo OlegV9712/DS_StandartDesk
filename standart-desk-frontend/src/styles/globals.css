@@ -29,14 +29,26 @@
   --color-bg-overlay: rgba(0, 0, 0, 0.05);
   --color-bg-overlay-dark: rgba(0, 0, 0, 0.1);
 
+  /* Input Colors */
+  --input-bg: #FFFFFF;
+  --input-text: #1A1A1A;
+  --input-border: #D1D5DB;
+  --input-border-focus: #667eea;
+  --input-placeholder: #9CA3AF;
+
+  /* Modal & Card Colors */
+  --card-bg: #FFFFFF;
+  --modal-bg: #FFFFFF;
+  --modal-overlay: rgba(0, 0, 0, 0.5);
+
   /* Liquid Glass Colors */
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-bg-dark: rgba(255, 255, 255, 0.6);
-  --glass-bg-light: rgba(255, 255, 255, 0.95);
-  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-bg-dark: rgba(255, 255, 255, 0.85);
+  --glass-bg-light: rgba(255, 255, 255, 0.98);
+  --glass-border: rgba(0, 0, 0, 0.08);
   --glass-backdrop: blur(10px);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-  --glass-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.3);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  --glass-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
   
   /* Gradient Colors */
   --gradient-primary: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
@@ -140,7 +152,7 @@ body {
 
   /* Neutral Colors - Dark & High Contrast */
   --color-text: #F1F5F9;
-  --color-text-dark: #FFFFFF;
+  --color-text-dark: #F1F5F9;
   --color-text-light: #E2E8F0;
   --color-text-lighter: #CBD5E1;
   --color-border: #475569;
@@ -150,6 +162,27 @@ body {
   --color-bg-white: #1C2128;
   --color-bg-overlay: rgba(255, 255, 255, 0.08);
   --color-bg-overlay-dark: rgba(0, 0, 0, 0.4);
+
+  /* Input Colors */
+  --input-bg: #1C2128;
+  --input-text: #F1F5F9;
+  --input-border: #475569;
+  --input-border-focus: #38BDF8;
+  --input-placeholder: #8B95A5;
+
+  /* Modal & Card Colors */
+  --card-bg: #161B22;
+  --modal-bg: #0D1117;
+  --modal-overlay: rgba(0, 0, 0, 0.8);
+
+  /* Liquid Glass Colors */
+  --glass-bg: rgba(17, 25, 40, 0.75);
+  --glass-bg-dark: rgba(10, 15, 25, 0.8);
+  --glass-bg-light: rgba(30, 40, 60, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-backdrop: blur(10px);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  --glass-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.6);
 
   /* Semantic Colors - High Contrast for Dark Mode */
   --color-success: #34D399;

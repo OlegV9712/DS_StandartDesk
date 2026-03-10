@@ -221,7 +221,7 @@ export const ProjectEditor: React.FC = () => {
             className={`tab-btn ${activeTab === 'pages' ? 'active' : ''}`}
             onClick={() => setActiveTab('pages')}
           >
-            📑 Pages ({pages.length})
+            📑 Pages ({pages?.length ?? 0})
           </button>
           {blockSchema && projectType === 1 && (
             <button
@@ -264,7 +264,7 @@ export const ProjectEditor: React.FC = () => {
           <div className="pages-section">
             <div className="pages-placeholder">
               <p>📑 Pages management coming soon</p>
-              <p>Current pages: {pages.length}</p>
+              <p>Current pages: {pages?.length ?? 0}</p>
             </div>
           </div>
         )}

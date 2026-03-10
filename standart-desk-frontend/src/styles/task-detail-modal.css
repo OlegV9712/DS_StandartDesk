@@ -161,7 +161,7 @@
   font-size: 14px;
   font-family: inherit;
   color: var(--color-text-dark);
-  background-color: white;
+  background-color: var(--modal-bg);
   transition: border-color 0.2s ease;
 }
 

@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './store/authStore';
 import { Login } from './pages/Login';
@@ -46,7 +46,16 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole?: strin
 };
 
 const App: React.FC = () => {
-  const isAuthenticated = useAuth((state) => state.isAuthenticated);
+  const user = useAuth((state) => state.user);
+  const hydrate = useAuth((state) => state.hydrate);
+
+  // Hydrate auth state from localStorage on app init
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
+
+  // Use user instead of isAuthenticated to check auth status
+  const isAuthenticated = user !== null;
 
   return (
     <Router>
@@ -125,7 +134,9 @@ const App: React.FC = () => {
           path="/settings"
           element={
             <ProtectedRoute>
-              <Settings />
+              <Suspense fallback={<PageLoader />}>
+                <Settings />
+              </Suspense>
             </ProtectedRoute>
           }
         />
